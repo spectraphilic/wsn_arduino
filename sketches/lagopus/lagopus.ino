@@ -4,11 +4,12 @@
  *
  * Feather-M0 Adalogger pins:
  * https://learn.adafruit.com/adafruit-feather-m0-adalogger/pinouts
- * 
+ *
  * QT Py pins:
  * https://learn.adafruit.com/adafruit-qt-py/pinouts
  */
 
+#include <Adafruit_BME280.h>
 #include <SDI12.h>
 
 #define DATA_PIN 5   /*!< The pin of the SDI-12 data bus */
@@ -31,7 +32,26 @@ enum states {
 char address = '5';
 int  state;
 
+Adafruit_BME280 bme; // BME280 I2C
 SDI12 sdi12(DATA_PIN); // Create object by which to communicate with the SDI-12 bus on SDIPIN
+
+
+void bme280_init()
+{
+    // default settings
+    unsigned status = bme.begin();
+    // You can also pass in a Wire library object like &Wire2
+    // status = bme.begin(0x76, &Wire2)
+    if (!status) {
+        Serial.println("Could not find a valid BME280 sensor, check wiring, address, sensor ID!");
+        Serial.print("SensorID was: 0x"); Serial.println(bme.sensorID(),16);
+        Serial.print("        ID of 0xFF probably means a bad address, a BMP 180 or BMP 085\n");
+        Serial.print("   ID of 0x56-0x58 represents a BMP 280,\n");
+        Serial.print("        ID of 0x60 represents a BME 280.\n");
+        Serial.print("        ID of 0x61 represents a BME 680.\n");
+        while (1) delay(10);
+    }
+}
 
 
 void setup()
@@ -43,6 +63,8 @@ void setup()
     sdi12.begin();
     delay(500);
     sdi12.forceListen();  // sets SDIPIN as input to prepare for incoming message
+
+    bme280_init();
 }
 
 
@@ -75,6 +97,8 @@ void loop()
 {
     int c;
     char newAddress;
+
+    float temp, pres, humi;
 
     state = INITIAL;
     while (1) {
@@ -135,6 +159,9 @@ void loop()
             case START: // aM
                 if (c == '!') { // aM!
                     sendResponse("0013"); // 3 values in 1 second
+                    temp = bme.readTemperature();
+                    pres = bme.readPressure() / 100.0F;
+                    humi = bme.readHumidity();
                 }
                 state = INITIAL;
                 break;
@@ -147,7 +174,9 @@ void loop()
                 break;
             case DATA_0: // aD0
                 if (c == '!') { // aD0!
-                    sendResponse("0+3.14+2.22+28.00"); // TODO Hardcoded
+                    char buffer[50];
+                    sprintf(buffer, "%+.2f%+.2f%+.2f", temp, pres, humi);
+                    sendResponse(buffer);
                 }
                 state = INITIAL;
                 break;
