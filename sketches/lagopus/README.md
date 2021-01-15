@@ -1,11 +1,21 @@
 # SDI-12
 
-Install the "SDI-12" Arduino library.
+Install the following libraries with the Arduni library manager:
+- SDI-12
+- Adafruit BME280
+- Adafruit SHT31
+- Adafruit BusIO (required by SHT31)
+- Adafruit TMP117
+
+Sensors:
+- 0x44 SHT31
+- 0x48 TMP117
+- 0x77 BME280
 
 
 # Pins
 
-Data
+Data:
 - Waspomote     : DIGITAL8
 - Feather-M0    : D5
 

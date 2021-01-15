@@ -10,61 +10,102 @@
  */
 
 #include <Adafruit_BME280.h>
+#include <Adafruit_SHT31.h>
+#include <Adafruit_TMP117.h>
 #include <SDI12.h>
 
+//#define DEBUG
 #define DATA_PIN 5   /*!< The pin of the SDI-12 data bus */
 #define POWER_PIN -1 /*!< The sensor power pin (or -1 if not switching power) */
 
-// States of the state machine
+#ifdef DEBUG
+    #define print(...) Serial.print(__VA_ARGS__)
+    #define println(...) Serial.println(__VA_ARGS__)
+#else
+    #define print(...)
+    #define println(...)
+#endif
+
+// States of the state machine for parsing SDI-12 messages
 enum states {
-    INITIAL,
-    QUERY, // ?
-    ADDRESS, // a
-    IDENT, // aI
-    CHG, // aA
-    CHG_ADDR, // aAb
-    START, // aM
-    DATA, // aD
-    DATA_0, // aD0
+    S_0, // initial state (empty string)
+    S_Q, // ?
+    S_a,
+    S_aI,
+    S_aA,
+    S_aAb,
+    S_aM,  // BME280
+    S_aM1, // SHT31
+    S_aM2, // TMP117
+    S_aD,
+    S_aD0, // BME280
+    S_aD1, // SHT31
+    S_aD2, // TMP117
 };
 
 // Global variables
 char address = '5';
 int  state;
 
-Adafruit_BME280 bme; // BME280 I2C
+// Sensors and SDI-12 interface
+Adafruit_BME280 bme;
+Adafruit_SHT31 sht31 = Adafruit_SHT31();
+Adafruit_TMP117 tmp117;
 SDI12 sdi12(DATA_PIN); // Create object by which to communicate with the SDI-12 bus on SDIPIN
 
 
 void bme280_init()
 {
-    // default settings
-    unsigned status = bme.begin();
-    // You can also pass in a Wire library object like &Wire2
-    // status = bme.begin(0x76, &Wire2)
-    if (!status) {
-        Serial.println("Could not find a valid BME280 sensor, check wiring, address, sensor ID!");
-        Serial.print("SensorID was: 0x"); Serial.println(bme.sensorID(),16);
-        Serial.print("        ID of 0xFF probably means a bad address, a BMP 180 or BMP 085\n");
-        Serial.print("   ID of 0x56-0x58 represents a BMP 280,\n");
-        Serial.print("        ID of 0x60 represents a BME 280.\n");
-        Serial.print("        ID of 0x61 represents a BME 680.\n");
-        while (1) delay(10);
+    bool status = bme.begin(0x77);
+    if (status) {
+        println("BME280\tOK");
+    } else {
+        println("BME280\tERROR");
+    }
+}
+
+void sht31_init()
+{
+    bool status = sht31.begin(0x44); // Set to 0x45 for alternate i2c addr
+    if (status) {
+        println("SHT31\tOK");
+        // Enable the heater for 1s
+        sht31.heater(true);
+        delay(1000);
+        sht31.heater(false);
+    } else {
+        println("SHT31\tERROR");
+    }
+}
+
+void tmp117_init()
+{
+    bool status = tmp117.begin();
+    if (status) {
+        println("TMP117\tOK");
+    } else {
+        println("TMP117\tERROR");
     }
 }
 
 
 void setup()
 {
+#ifdef DEBUG
     Serial.begin(9600); // The baudrate of Serial monitor is set in 9600
     while (!Serial); // Waiting for Serial Monitor
-    Serial.println("SDI-12 Slave");
+#endif
 
+    // Intialize sensors
+    bme280_init();
+    sht31_init();
+    tmp117_init();
+
+    // Initialize SDI-12 interface
     sdi12.begin();
     delay(500);
     sdi12.forceListen();  // sets SDIPIN as input to prepare for incoming message
-
-    bme280_init();
+    println("SDI-12\tOK");
 }
 
 
@@ -86,10 +127,7 @@ void sendResponse(const char *msg)
     strcpy(response+1, msg);
     strcat(response, "\r\n");
     sdi12.sendResponse(response);
-    state = INITIAL; // Reset automata state
-
-//  Serial.print("SEND: ");
-//  Serial.println(msg);
+    state = S_0; // Reset automata state
 }
 
 
@@ -98,87 +136,124 @@ void loop()
     int c;
     char newAddress;
 
-    float temp, pres, humi;
+    float bme_t, bme_p, bme_h;
+    float sht_t, sht_h;
+    sensors_event_t temp; // TMP117
+    char buffer[50];
 
-    state = INITIAL;
+    state = S_0;
     while (1) {
         c = getChar();
         switch (state) {
-            case INITIAL:
+            case S_0:
                 if (c == '?') {
-                    state = QUERY;
+                    state = S_Q;
                 } else if (c == address) {
-                    state = ADDRESS;
+                    state = S_a;
                 }
                 break;
-            case QUERY: // ?
+            case S_Q: // ?
                 if (c == '!') {
                     sendResponse(""); // ?!
-                } else {
-                    state = INITIAL;
                 }
+                state = S_0;
                 break;
-            case ADDRESS: // a
+            case S_a:
                 switch (c) {
                     case '!':
                         sendResponse(""); // a!
                         break;
                     case 'I':
-                        state = IDENT;
+                        state = S_aI;
                         break;
                     case 'A':
-                        state = CHG;
+                        state = S_aA;
                         break;
                     case 'M':
-                        state = START;
+                        state = S_aM;
                         break;
                     case 'D':
-                        state = DATA;
+                        state = S_aD;
                         break;
                     default:
-                        state = INITIAL;
+                        state = S_0;
                 }
                 break;
-            case IDENT: // aI
+            case S_aI:
                 if (c == '!') { // aI!
                     sendResponse("14UOSLOGEOLAGOPU000");
                 }
-                state = INITIAL;
+                state = S_0;
                 break;
-            case CHG: // aA
+            case S_aA:
                 newAddress = (char)c;
-                state = CHG_ADDR;
+                state = S_aAb;
                 break;
-            case CHG_ADDR: // aAb
+            case S_aAb:
                 if (c == '!') { // aAb!
                     address = newAddress;
                     sendResponse("");
                 }
-                state = INITIAL;
+                state = S_0;
                 break;
-            case START: // aM
+            case S_aM:
                 if (c == '!') { // aM!
                     sendResponse("0013"); // 3 values in 1 second
-                    temp = bme.readTemperature();
-                    pres = bme.readPressure() / 100.0F;
-                    humi = bme.readHumidity();
-                }
-                state = INITIAL;
-                break;
-            case DATA: // aD
-                if (c == '0') { // aD0
-                    state = DATA_0;
+                    bme_t = bme.readTemperature();
+                    bme_p = bme.readPressure() / 100.0F;
+                    bme_h = bme.readHumidity();
+                } else if (c == '1') {
+                    state = S_aM1;
+                } else if (c == '2') {
+                    state = S_aM2;
                 } else {
-                    state = INITIAL;
+                    state = S_0;
                 }
                 break;
-            case DATA_0: // aD0
+            case S_aM1:
+                if (c == '!') { // aM1!
+                    sendResponse("0012"); // 2 values in 1 second
+                    sht_t = sht31.readTemperature();
+                    sht_h = sht31.readHumidity();
+                }
+                state = S_0;
+                break;
+            case S_aM2:
+                if (c == '!') { // aM2!
+                    sendResponse("0011"); // 1 value in 1 second
+                    tmp117.getEvent(&temp);
+                }
+                state = S_0;
+                break;
+            case S_aD:
+                if      (c == '0') { state = S_aD0; }
+                else if (c == '1') { state = S_aD1; }
+                else if (c == '2') { state = S_aD2; }
+                else               { state = S_0; }
+                break;
+            case S_aD0:
                 if (c == '!') { // aD0!
-                    char buffer[50];
-                    sprintf(buffer, "%+.2f%+.2f%+.2f", temp, pres, humi);
+                    if (isnan(sht_t) || isnan(sht_h)) {
+                        // TODO What should we send?
+                    }
+                    sprintf(buffer, "%+.2f%+.2f%+.2f", bme_t, bme_p, bme_h);
                     sendResponse(buffer);
                 }
-                state = INITIAL;
+                state = S_0;
+                break;
+            case S_aD1:
+                if (c == '!') { // aD1!
+                    sprintf(buffer, "%+.2f%+.2f", sht_t, sht_h);
+                    sendResponse(buffer);
+                }
+                state = S_0;
+                break;
+            case S_aD2:
+                if (c == '!') { // aD2!
+                    sprintf(buffer, "%+.2f", temp.temperature);
+                    sendResponse(buffer);
+                }
+                state = S_0;
                 break;
         }
     }
