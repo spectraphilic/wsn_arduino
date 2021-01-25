@@ -37,6 +37,7 @@ enum states {
     S_aM,  // BME280
     S_aM1, // SHT31
     S_aM2, // TMP117
+    S_aMn, // A SDI-12 sensor must reply to all aMn commands
     S_aD,
     S_aD0, // BME280
     S_aD1, // SHT31
@@ -206,6 +207,8 @@ void loop()
                     state = S_aM1;
                 } else if (c == '2') {
                     state = S_aM2;
+                } else if (c >= '3' && c <= '9') {
+                    state = S_aMn;
                 } else {
                     state = S_0;
                 }
@@ -222,6 +225,12 @@ void loop()
                 if (c == '!') { // aM2!
                     sendResponse("0011"); // 1 value in 1 second
                     tmp117.getEvent(&temp);
+                }
+                state = S_0;
+                break;
+            case S_aMn:
+                if (c == '!') { // aMn!
+                    sendResponse("0000");
                 }
                 state = S_0;
                 break;
