@@ -39,14 +39,19 @@ enum states {
     S_aM2, // TMP117
     S_aMn, // A SDI-12 sensor must reply to all aMn commands
     S_aD,
-    S_aD0, // BME280
-    S_aD1, // SHT31
-    S_aD2, // TMP117
+    S_aD0,
+};
+
+enum sensors {
+    BME280,
+    SHT31,
+    TMP117,
 };
 
 // Global variables
 char address = '5';
-int  state;
+enum states state;
+enum sensors sensor;
 
 // Sensors and SDI-12 interface
 Adafruit_BME280 bme;
@@ -200,6 +205,7 @@ void loop()
             case S_aM:
                 if (c == '!') { // aM!
                     sendResponse("0013"); // 3 values in 1 second
+                    sensor = BME280;
                     bme_t = bme.readTemperature();
                     bme_p = bme.readPressure() / 100.0F;
                     bme_h = bme.readHumidity();
@@ -216,6 +222,7 @@ void loop()
             case S_aM1:
                 if (c == '!') { // aM1!
                     sendResponse("0012"); // 2 values in 1 second
+                    sensor = SHT31;
                     sht_t = sht31.readTemperature();
                     sht_h = sht31.readHumidity();
                 }
@@ -224,6 +231,7 @@ void loop()
             case S_aM2:
                 if (c == '!') { // aM2!
                     sendResponse("0011"); // 1 value in 1 second
+                    sensor = TMP117;
                     tmp117.getEvent(&temp);
                 }
                 state = S_0;
@@ -236,30 +244,24 @@ void loop()
                 break;
             case S_aD:
                 if      (c == '0') { state = S_aD0; }
-                else if (c == '1') { state = S_aD1; }
-                else if (c == '2') { state = S_aD2; }
                 else               { state = S_0; }
                 break;
             case S_aD0:
                 if (c == '!') { // aD0!
-                    if (isnan(sht_t) || isnan(sht_h)) {
-                        // TODO What should we send?
+                    switch (sensor) {
+                        case BME280:
+                            if (isnan(sht_t) || isnan(sht_h)) {
+                                // TODO What should we send?
+                            }
+                            sprintf(buffer, "%+.2f%+.2f%+.2f", bme_t, bme_p, bme_h);
+                            break;
+                        case SHT31:
+                            sprintf(buffer, "%+.2f%+.2f", sht_t, sht_h);
+                            break;
+                        case TMP117:
+                            sprintf(buffer, "%+.2f", temp.temperature);
+                            break;
                     }
-                    sprintf(buffer, "%+.2f%+.2f%+.2f", bme_t, bme_p, bme_h);
-                    sendResponse(buffer);
-                }
-                state = S_0;
-                break;
-            case S_aD1:
-                if (c == '!') { // aD1!
-                    sprintf(buffer, "%+.2f%+.2f", sht_t, sht_h);
-                    sendResponse(buffer);
-                }
-                state = S_0;
-                break;
-            case S_aD2:
-                if (c == '!') { // aD2!
-                    sprintf(buffer, "%+.2f", temp.temperature);
                     sendResponse(buffer);
                 }
                 state = S_0;
