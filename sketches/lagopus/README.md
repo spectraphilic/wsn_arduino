@@ -6,11 +6,13 @@ Install the following libraries with the Arduni library manager:
 - Adafruit SHT31
 - Adafruit BusIO (required by SHT31)
 - Adafruit TMP117
+- Sparkfun VL53L1X
 
 Sensors:
 - 0x44 SHT31
 - 0x48 TMP117
 - 0x77 BME280
+- 0x29 VL53L1X
 
 
 # Pins

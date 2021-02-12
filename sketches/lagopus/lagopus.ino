@@ -9,11 +9,14 @@
  * https://learn.adafruit.com/adafruit-qt-py/pinouts
  */
 
+#include <SDI12.h>
 #include <Adafruit_BME280.h>
 #include <Adafruit_SHT31.h>
 #include <Adafruit_TMP117.h>
-#include <SDI12.h>
+#include <Wire.h>
+#include <SparkFun_VL53L1X.h>
 
+//#define BLINK
 //#define DEBUG
 #define DATA_PIN 5   /*!< The pin of the SDI-12 data bus */
 #define POWER_PIN -1 /*!< The sensor power pin (or -1 if not switching power) */
@@ -37,6 +40,7 @@ enum states {
     S_aM,  // BME280
     S_aM1, // SHT31
     S_aM2, // TMP117
+    S_aM3, // VL53L1
     S_aMn, // A SDI-12 sensor must reply to all aMn commands
     S_aD,
     S_aD0,
@@ -46,6 +50,7 @@ enum sensors {
     BME280,
     SHT31,
     TMP117,
+    VL53L1,
 };
 
 // Global variables
@@ -54,10 +59,11 @@ enum states state;
 enum sensors sensor;
 
 // Sensors and SDI-12 interface
+SDI12 sdi12(DATA_PIN); // Create object by which to communicate with the SDI-12 bus on SDIPIN
 Adafruit_BME280 bme;
 Adafruit_SHT31 sht31 = Adafruit_SHT31();
 Adafruit_TMP117 tmp117;
-SDI12 sdi12(DATA_PIN); // Create object by which to communicate with the SDI-12 bus on SDIPIN
+SFEVL53L1X vl53l1(Wire); // XXX Do we use the shutdown/interrupt pins?
 
 
 void bme280_init()
@@ -94,24 +100,41 @@ void tmp117_init()
     }
 }
 
+void vl53l1_init()
+{
+    bool error = vl53l1.begin();
+    if (error) {
+        println("VL54L1x\tERROR");
+    } else {
+        println("VL54L1x\tOK");
+    }
+}
+
 
 void setup()
 {
+#ifdef BLINK
+    pinMode(LED_BUILTIN, OUTPUT);
+    digitalWrite(LED_BUILTIN, LOW);
+#endif
+
 #ifdef DEBUG
     Serial.begin(9600); // The baudrate of Serial monitor is set in 9600
     while (!Serial); // Waiting for Serial Monitor
 #endif
-
-    // Intialize sensors
-    bme280_init();
-    sht31_init();
-    tmp117_init();
 
     // Initialize SDI-12 interface
     sdi12.begin();
     delay(500);
     sdi12.forceListen();  // sets SDIPIN as input to prepare for incoming message
     println("SDI-12\tOK");
+
+    // Intialize sensors
+    Wire.begin(); // XXX Used by the SparkFun libraries
+    bme280_init();
+    sht31_init();
+    tmp117_init();
+    vl53l1_init();
 }
 
 
@@ -145,6 +168,7 @@ void loop()
     float bme_t, bme_p, bme_h;
     float sht_t, sht_h;
     sensors_event_t temp; // TMP117
+    int distance;
     char buffer[50];
 
     state = S_0;
@@ -213,7 +237,9 @@ void loop()
                     state = S_aM1;
                 } else if (c == '2') {
                     state = S_aM2;
-                } else if (c >= '3' && c <= '9') {
+                } else if (c == '3') {
+                    state = S_aM3;
+                } else if (c >= '4' && c <= '9') {
                     state = S_aMn;
                 } else {
                     state = S_0;
@@ -233,6 +259,16 @@ void loop()
                     sendResponse("0011"); // 1 value in 1 second
                     sensor = TMP117;
                     tmp117.getEvent(&temp);
+                }
+                state = S_0;
+                break;
+            case S_aM3:
+                if (c == '!') { // aM3!
+                    sendResponse("0011"); // 1 value in 1 second
+                    sensor = VL53L1;
+                    vl53l1.startRanging();
+                    distance = vl53l1.getDistance();
+                    vl53l1.stopRanging();
                 }
                 state = S_0;
                 break;
@@ -260,6 +296,9 @@ void loop()
                             break;
                         case TMP117:
                             sprintf(buffer, "%+.2f", temp.temperature);
+                            break;
+                        case VL53L1:
+                            sprintf(buffer, "%+d", distance);
                             break;
                     }
                     sendResponse(buffer);
