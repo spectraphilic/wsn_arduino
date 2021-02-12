@@ -15,6 +15,7 @@
 #include <Adafruit_TMP117.h>
 #include <Wire.h>
 #include <SparkFun_VL53L1X.h>
+#include <SparkFunMLX90614.h>
 
 //#define BLINK
 //#define DEBUG
@@ -41,6 +42,7 @@ enum states {
     S_aM1, // SHT31
     S_aM2, // TMP117
     S_aM3, // VL53L1
+    S_aM4, // MLX90614
     S_aMn, // A SDI-12 sensor must reply to all aMn commands
     S_aD,
     S_aD0,
@@ -51,6 +53,7 @@ enum sensors {
     SHT31,
     TMP117,
     VL53L1,
+    MLX90614,
 };
 
 // Global variables
@@ -64,6 +67,7 @@ Adafruit_BME280 bme;
 Adafruit_SHT31 sht31 = Adafruit_SHT31();
 Adafruit_TMP117 tmp117;
 SFEVL53L1X vl53l1(Wire); // XXX Do we use the shutdown/interrupt pins?
+IRTherm mlx;
 
 
 void bme280_init()
@@ -73,6 +77,16 @@ void bme280_init()
         println("BME280\tOK");
     } else {
         println("BME280\tERROR");
+    }
+}
+
+void mlx_init()
+{
+    bool status = mlx.begin();
+    if (status) {
+        println("MLX90614\tOK");
+    } else {
+        println("MLX90614\tERROR");
     }
 }
 
@@ -130,8 +144,9 @@ void setup()
     println("SDI-12\tOK");
 
     // Intialize sensors
-    Wire.begin(); // XXX Used by the SparkFun libraries
+    Wire.begin(); // XXX Used by the SparkFun VL53L1X library
     bme280_init();
+    mlx_init();
     sht31_init();
     tmp117_init();
     vl53l1_init();
@@ -167,6 +182,7 @@ void loop()
 
     float bme_t, bme_p, bme_h;
     float sht_t, sht_h;
+    float mlx_a, mlx_o;
     sensors_event_t temp; // TMP117
     int distance;
     char buffer[50];
@@ -239,7 +255,9 @@ void loop()
                     state = S_aM2;
                 } else if (c == '3') {
                     state = S_aM3;
-                } else if (c >= '4' && c <= '9') {
+                } else if (c == '4') {
+                    state = S_aM4;
+                } else if (c >= '5' && c <= '9') {
                     state = S_aMn;
                 } else {
                     state = S_0;
@@ -272,6 +290,20 @@ void loop()
                 }
                 state = S_0;
                 break;
+            case S_aM4:
+                if (c == '!') { // aM4!
+                    sendResponse("0021"); // 1 value in 1 second
+                    sensor = MLX90614;
+                    bool success = mlx.read();
+                    if (success) {
+                        mlx_a = mlx.ambient();
+                        mlx_o = mlx.object();
+                    } else {
+                        // TODO Handle error
+                    }
+                }
+                state = S_0;
+                break;
             case S_aMn:
                 if (c == '!') { // aMn!
                     sendResponse("0000");
@@ -299,6 +331,9 @@ void loop()
                             break;
                         case VL53L1:
                             sprintf(buffer, "%+d", distance);
+                            break;
+                        case MLX90614:
+                            sprintf(buffer, "%+.2f%+.2f", mlx_a, mlx_o);
                             break;
                     }
                     sendResponse(buffer);
