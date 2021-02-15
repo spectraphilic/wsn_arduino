@@ -74,9 +74,9 @@ void bme280_init()
 {
     bool status = bme.begin(0x77);
     if (status) {
-        println("BME280\tOK");
+        println("BME280    OK");
     } else {
-        println("BME280\tERROR");
+        println("BME280    ERROR");
     }
 }
 
@@ -84,9 +84,9 @@ void mlx_init()
 {
     bool status = mlx.begin();
     if (status) {
-        println("MLX90614\tOK");
+        println("MLX90614  OK");
     } else {
-        println("MLX90614\tERROR");
+        println("MLX90614  ERROR");
     }
 }
 
@@ -94,13 +94,13 @@ void sht31_init()
 {
     bool status = sht31.begin(0x44); // Set to 0x45 for alternate i2c addr
     if (status) {
-        println("SHT31\tOK");
+        println("SHT31     OK");
         // Enable the heater for 1s
         sht31.heater(true);
         delay(1000);
         sht31.heater(false);
     } else {
-        println("SHT31\tERROR");
+        println("SHT31     ERROR");
     }
 }
 
@@ -108,9 +108,9 @@ void tmp117_init()
 {
     bool status = tmp117.begin();
     if (status) {
-        println("TMP117\tOK");
+        println("TMP117    OK");
     } else {
-        println("TMP117\tERROR");
+        println("TMP117    ERROR");
     }
 }
 
@@ -118,9 +118,9 @@ void vl53l1_init()
 {
     bool error = vl53l1.begin();
     if (error) {
-        println("VL54L1x\tERROR");
+        println("VL54L1X   ERROR");
     } else {
-        println("VL54L1x\tOK");
+        println("VL54L1X   OK");
     }
 }
 
@@ -141,7 +141,7 @@ void setup()
     sdi12.begin();
     delay(500);
     sdi12.forceListen();  // sets SDIPIN as input to prepare for incoming message
-    println("SDI-12\tOK");
+    println("SDI-12    OK");
 
     // Intialize sensors
     Wire.begin(); // XXX Used by the SparkFun VL53L1X library
