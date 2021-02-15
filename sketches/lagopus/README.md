@@ -2,12 +2,14 @@
 
 Install the following libraries with the Arduni library manager:
 - SDI-12
-- Adafruit BME280
-- Adafruit SHT31
-- Adafruit BusIO (required by SHT31)
-- Adafruit TMP117
 - Sparkfun VL53L1X
 - Sparkfun MLX90614
+- Adafruit BME280
+- Adafruit TMP117
+- Adafruit SHT31
+- Adafruit VEML7700
+- Adafruit AS7341
+- Adafruit ICM20X
 
 Sensors:
 - 0x44 SHT31

@@ -10,12 +10,18 @@
  */
 
 #include <SDI12.h>
+
+#include <Adafruit_AS7341.h>
 #include <Adafruit_BME280.h>
+#include <Adafruit_ICM20948.h>
 #include <Adafruit_SHT31.h>
 #include <Adafruit_TMP117.h>
+#include <Adafruit_VEML7700.h>
+
 #include <Wire.h>
 #include <SparkFun_VL53L1X.h>
 #include <SparkFunMLX90614.h>
+
 
 //#define BLINK
 //#define DEBUG
@@ -30,6 +36,17 @@
     #define println(...)
 #endif
 
+// Global objects
+SDI12 sdi12(DATA_PIN); // Create object by which to communicate with the SDI-12 bus on SDIPIN
+Adafruit_AS7341 as7341;
+Adafruit_BME280 bme;
+Adafruit_ICM20948 icm;
+Adafruit_SHT31 sht31;
+Adafruit_TMP117 tmp117;
+Adafruit_VEML7700 veml;
+SFEVL53L1X vl53l1(Wire); // XXX Do we use the shutdown/interrupt pins?
+IRTherm mlx;
+
 // States of the state machine for parsing SDI-12 messages
 enum states {
     S_0, // initial state (empty string)
@@ -43,6 +60,9 @@ enum states {
     S_aM2, // TMP117
     S_aM3, // VL53L1
     S_aM4, // MLX90614
+    S_aM5, // VEML7700
+    S_aM6, // AS7341
+    S_aM7, // ICM20X
     S_aMn, // A SDI-12 sensor must reply to all aMn commands
     S_aD,
     S_aD0,
@@ -54,6 +74,9 @@ enum sensors {
     TMP117,
     VL53L1,
     MLX90614,
+    VEML7700,
+    AS7341,
+    ICM20X,
 };
 
 // Global variables
@@ -61,29 +84,41 @@ char address = '5';
 enum states state;
 enum sensors sensor;
 
-// Sensors and SDI-12 interface
-SDI12 sdi12(DATA_PIN); // Create object by which to communicate with the SDI-12 bus on SDIPIN
-Adafruit_BME280 bme;
-Adafruit_SHT31 sht31 = Adafruit_SHT31();
-Adafruit_TMP117 tmp117;
-SFEVL53L1X vl53l1(Wire); // XXX Do we use the shutdown/interrupt pins?
-IRTherm mlx;
 
-
-void bme280_init()
+void as7341_init()
 {
-    bool status = bme.begin(0x77);
-    if (status) {
+    bool ok = as7341.begin();
+    if (ok) {
         println("BME280    OK");
     } else {
         println("BME280    ERROR");
     }
 }
 
+void bme280_init()
+{
+    bool ok = bme.begin(0x77);
+    if (ok) {
+        println("BME280    OK");
+    } else {
+        println("BME280    ERROR");
+    }
+}
+
+void icm_init()
+{
+    bool ok = icm.begin_I2C();
+    if (ok) {
+        println("ICM20948  OK");
+    } else {
+        println("ICM20948  ERROR");
+    }
+}
+
 void mlx_init()
 {
-    bool status = mlx.begin();
-    if (status) {
+    bool ok = mlx.begin();
+    if (ok) {
         println("MLX90614  OK");
     } else {
         println("MLX90614  ERROR");
@@ -92,8 +127,8 @@ void mlx_init()
 
 void sht31_init()
 {
-    bool status = sht31.begin(0x44); // Set to 0x45 for alternate i2c addr
-    if (status) {
+    bool ok = sht31.begin(0x44); // Set to 0x45 for alternate i2c addr
+    if (ok) {
         println("SHT31     OK");
         // Enable the heater for 1s
         sht31.heater(true);
@@ -106,11 +141,21 @@ void sht31_init()
 
 void tmp117_init()
 {
-    bool status = tmp117.begin();
-    if (status) {
+    bool ok = tmp117.begin();
+    if (ok) {
         println("TMP117    OK");
     } else {
         println("TMP117    ERROR");
+    }
+}
+
+void veml7700_init()
+{
+    bool ok = veml.begin();
+    if (ok) {
+        println("VEML7700  OK");
+    } else {
+        println("VEML7700  ERROR");
     }
 }
 
@@ -145,7 +190,9 @@ void setup()
 
     // Intialize sensors
     Wire.begin(); // XXX Used by the SparkFun VL53L1X library
+    as7341_init();
     bme280_init();
+    icm_init();
     mlx_init();
     sht31_init();
     tmp117_init();
@@ -179,13 +226,17 @@ void loop()
 {
     int c;
     char newAddress;
+    char buffer[80];
+    char *p;
+    bool ok;
 
+    uint16_t as7341_channels[12];
     float bme_t, bme_p, bme_h;
-    float sht_t, sht_h;
     float mlx_a, mlx_o;
+    float sht_t, sht_h;
+    float veml_lux, veml_white; uint16_t veml_als;
     sensors_event_t temp; // TMP117
     int distance;
-    char buffer[50];
 
     state = S_0;
     while (1) {
@@ -257,7 +308,13 @@ void loop()
                     state = S_aM3;
                 } else if (c == '4') {
                     state = S_aM4;
-                } else if (c >= '5' && c <= '9') {
+                } else if (c == '5') {
+                    state = S_aM5;
+                } else if (c == '6') {
+                    state = S_aM6;
+                } else if (c == '7') {
+                    state = S_aM7;
+                } else if (c >= '8' && c <= '9') {
                     state = S_aMn;
                 } else {
                     state = S_0;
@@ -292,7 +349,7 @@ void loop()
                 break;
             case S_aM4:
                 if (c == '!') { // aM4!
-                    sendResponse("0021"); // 1 value in 1 second
+                    sendResponse("0021"); // 2 values in 1 second
                     sensor = MLX90614;
                     bool success = mlx.read();
                     if (success) {
@@ -301,6 +358,34 @@ void loop()
                     } else {
                         // TODO Handle error
                     }
+                }
+                state = S_0;
+                break;
+            case S_aM5:
+                if (c == '!') { // aM5!
+                    sendResponse("0031"); // 3 values in 1 second
+                    sensor = VEML7700;
+                    veml_lux = veml.readLux();
+                    veml_white = veml.readWhite();
+                    veml_als = veml.readALS();
+                }
+                state = S_0;
+                break;
+            case S_aM6:
+                if (c == '!') { // aM6!
+                    sendResponse("003c"); // 12 values in 1 second FIXME
+                    sensor = AS7341;
+                    ok = as7341.readAllChannels();
+                    if (! ok) {
+                        // TODO Handle error
+                    }
+                }
+                state = S_0;
+                break;
+            case S_aM7:
+                if (c == '!') { // aM7!
+                    sensor = ICM20X;
+                    // TODO
                 }
                 state = S_0;
                 break;
@@ -334,6 +419,19 @@ void loop()
                             break;
                         case MLX90614:
                             sprintf(buffer, "%+.2f%+.2f", mlx_a, mlx_o);
+                            break;
+                        case VEML7700:
+                            sprintf(buffer, "%+.2f%+.2f%+u", veml_lux, veml_white, veml_als);
+                            break;
+                        case AS7341: // FIXME Too many fields for 1 data command
+                            as7341.getAllChannels(as7341_channels);
+                            p = buffer;
+                            for (int i = 0; i < 12; i++) {
+                                p += sprintf(p, "%+u", as7341_channels[i]);
+                            }
+                            break;
+                        case ICM20X:
+                            // TODO
                             break;
                     }
                     sendResponse(buffer);
