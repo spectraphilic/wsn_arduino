@@ -14,13 +14,11 @@
 #include <Adafruit_AS7341.h>
 #include <Adafruit_BME280.h>
 #include <Adafruit_ICM20948.h>
+#include <Adafruit_MLX90614.h>
 #include <Adafruit_SHT31.h>
 #include <Adafruit_TMP117.h>
 #include <Adafruit_VEML7700.h>
-
-#include <Wire.h>
 #include <SparkFun_VL53L1X.h>
-#include <SparkFunMLX90614.h>
 
 
 //#define BLINK
@@ -41,11 +39,11 @@ SDI12 sdi12(DATA_PIN); // Create object by which to communicate with the SDI-12 
 Adafruit_AS7341 as7341;
 Adafruit_BME280 bme;
 Adafruit_ICM20948 icm;
+Adafruit_MLX90614 mlx;
 Adafruit_SHT31 sht31;
 Adafruit_TMP117 tmp117;
 Adafruit_VEML7700 veml;
-SFEVL53L1X vl53l1(Wire); // XXX Do we use the shutdown/interrupt pins?
-IRTherm mlx;
+SFEVL53L1X vl53l1;
 
 // States of the state machine for parsing SDI-12 messages
 enum states {
@@ -89,9 +87,9 @@ void as7341_init()
 {
     bool ok = as7341.begin();
     if (ok) {
-        println("BME280    OK");
+        println("AS7341    OK");
     } else {
-        println("BME280    ERROR");
+        println("AS7341    ERROR");
     }
 }
 
@@ -189,13 +187,13 @@ void setup()
     println("SDI-12    OK");
 
     // Intialize sensors
-    Wire.begin(); // XXX Used by the SparkFun VL53L1X library
     as7341_init();
     bme280_init();
     icm_init();
     mlx_init();
     sht31_init();
     tmp117_init();
+    veml7700_init();
     vl53l1_init();
 }
 
@@ -232,12 +230,12 @@ void loop()
 
     uint16_t as7341_channels[12];
     float bme_t, bme_p, bme_h;
-    float mlx_a, mlx_o;
+    double mlx_a, mlx_o;
     float sht_t, sht_h;
     float veml_lux, veml_white; uint16_t veml_als;
     sensors_event_t tmp117_event;
     sensors_event_t icm_accel, icm_gyro, icm_mag, icm_temp;
-    int distance; // XXX
+    int vl_distance;
 
     state = S_0;
     while (1) {
@@ -343,7 +341,7 @@ void loop()
                     sendResponse("0011"); // 1 value in 1 second
                     sensor = VL53L1;
                     vl53l1.startRanging();
-                    distance = vl53l1.getDistance();
+                    vl_distance = vl53l1.getDistance();
                     vl53l1.stopRanging();
                 }
                 state = S_0;
@@ -352,13 +350,8 @@ void loop()
                 if (c == '!') { // aM4!
                     sendResponse("0012"); // 2 values in 1 second
                     sensor = MLX90614;
-                    bool success = mlx.read();
-                    if (success) {
-                        mlx_a = mlx.ambient();
-                        mlx_o = mlx.object();
-                    } else {
-                        // TODO Handle error
-                    }
+                    mlx_o = mlx.readObjectTempC();
+                    mlx_a = mlx.readAmbientTempC();
                 }
                 state = S_0;
                 break;
@@ -417,7 +410,7 @@ void loop()
                             sprintf(buffer, "%+.2f", tmp117_event.temperature);
                             break;
                         case VL53L1:
-                            sprintf(buffer, "%+d", distance);
+                            sprintf(buffer, "%+d", vl_distance);
                             break;
                         case MLX90614:
                             sprintf(buffer, "%+.2f%+.2f", mlx_a, mlx_o);
