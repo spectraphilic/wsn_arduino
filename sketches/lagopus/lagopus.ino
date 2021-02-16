@@ -35,7 +35,7 @@
 #endif
 
 // Global objects
-SDI12 sdi12(DATA_PIN); // Create object by which to communicate with the SDI-12 bus on SDIPIN
+SDI12 sdi12(DATA_PIN);
 Adafruit_AS7341 as7341;
 Adafruit_BME280 bme;
 Adafruit_ICM20948 icm;
@@ -43,7 +43,10 @@ Adafruit_MLX90614 mlx;
 Adafruit_SHT31 sht31;
 Adafruit_TMP117 tmp117;
 Adafruit_VEML7700 veml;
-SFEVL53L1X vl53l1;
+SFEVL53L1X vl;
+
+bool as7341_ok, bme_ok, icm_ok, mlx_ok, sht31_ok, tmp117_ok, veml_ok, vl_ok;
+
 
 // States of the state machine for parsing SDI-12 messages
 enum states {
@@ -85,8 +88,8 @@ enum sensors sensor;
 
 void as7341_init()
 {
-    bool ok = as7341.begin();
-    if (ok) {
+    as7341_ok = as7341.begin();
+    if (as7341_ok) {
         println("AS7341    OK");
     } else {
         println("AS7341    ERROR");
@@ -95,8 +98,8 @@ void as7341_init()
 
 void bme280_init()
 {
-    bool ok = bme.begin(0x77);
-    if (ok) {
+    bme_ok = bme.begin(0x77);
+    if (bme_ok) {
         println("BME280    OK");
     } else {
         println("BME280    ERROR");
@@ -105,8 +108,8 @@ void bme280_init()
 
 void icm_init()
 {
-    bool ok = icm.begin_I2C();
-    if (ok) {
+    icm_ok = icm.begin_I2C();
+    if (icm_ok) {
         println("ICM20948  OK");
     } else {
         println("ICM20948  ERROR");
@@ -115,8 +118,8 @@ void icm_init()
 
 void mlx_init()
 {
-    bool ok = mlx.begin();
-    if (ok) {
+    mlx_ok = mlx.begin();
+    if (mlx_ok) {
         println("MLX90614  OK");
     } else {
         println("MLX90614  ERROR");
@@ -125,8 +128,8 @@ void mlx_init()
 
 void sht31_init()
 {
-    bool ok = sht31.begin(0x44); // Set to 0x45 for alternate i2c addr
-    if (ok) {
+    sht31_ok = sht31.begin(0x44); // Set to 0x45 for alternate i2c addr
+    if (sht31_ok) {
         println("SHT31     OK");
         // Enable the heater for 1s
         sht31.heater(true);
@@ -139,8 +142,8 @@ void sht31_init()
 
 void tmp117_init()
 {
-    bool ok = tmp117.begin();
-    if (ok) {
+    tmp117_ok = tmp117.begin();
+    if (tmp117_ok) {
         println("TMP117    OK");
     } else {
         println("TMP117    ERROR");
@@ -149,8 +152,8 @@ void tmp117_init()
 
 void veml7700_init()
 {
-    bool ok = veml.begin();
-    if (ok) {
+    veml_ok = veml.begin();
+    if (veml_ok) {
         println("VEML7700  OK");
     } else {
         println("VEML7700  ERROR");
@@ -159,11 +162,11 @@ void veml7700_init()
 
 void vl53l1_init()
 {
-    bool error = vl53l1.begin();
-    if (error) {
-        println("VL54L1X   ERROR");
-    } else {
+    vl_ok = ! vl.begin();
+    if (vl_ok) {
         println("VL54L1X   OK");
+    } else {
+        println("VL54L1X   ERROR");
     }
 }
 
@@ -230,7 +233,7 @@ void loop()
 
     uint16_t as7341_channels[12];
     float bme_t, bme_p, bme_h;
-    double mlx_a, mlx_o;
+    double mlx_o, mlx_a;
     float sht_t, sht_h;
     float veml_lux, veml_white; uint16_t veml_als;
     sensors_event_t tmp117_event;
@@ -294,11 +297,15 @@ void loop()
                 break;
             case S_aM:
                 if (c == '!') { // aM!
-                    sendResponse("001a"); // 10 values in 1 second FIXME
-                    sensor = AS7341;
-                    ok = as7341.readAllChannels();
-                    if (! ok) {
-                        // TODO Handle error
+                    if (as7341_ok) {
+                        sendResponse("001a"); // 10 values in 1 second FIXME
+                        sensor = AS7341;
+                        ok = as7341.readAllChannels();
+                        if (! ok) {
+                            // TODO Handle error
+                        }
+                    } else {
+                        sendResponse("0000");
                     }
                 } else if (c == '1') {
                     state = S_aM1;
@@ -322,65 +329,93 @@ void loop()
                 break;
             case S_aM1:
                 if (c == '!') { // aM1!
-                    sendResponse("0013"); // 3 values in 1 second
-                    sensor = BME280;
-                    bme_t = bme.readTemperature();
-                    bme_p = bme.readPressure() / 100.0F;
-                    bme_h = bme.readHumidity();
+                    if (bme_ok) {
+                        sendResponse("0013"); // 3 values in 1 second
+                        sensor = BME280;
+                        bme_t = bme.readTemperature();
+                        bme_p = bme.readPressure() / 100.0F;
+                        bme_h = bme.readHumidity();
+                    } else {
+                        sendResponse("0000");
+                    }
                 }
                 state = S_0;
                 break;
             case S_aM2:
                 if (c == '!') { // aM2!
-                    sendResponse("001a"); // 10 values in 1 second
-                    sensor = ICM20X;
-                    icm.getEvent(&icm_accel, &icm_gyro, &icm_temp, &icm_mag);
+                    if (icm_ok) {
+                        sendResponse("001a"); // 10 values in 1 second
+                        sensor = ICM20X;
+                        icm.getEvent(&icm_accel, &icm_gyro, &icm_temp, &icm_mag);
+                    } else {
+                        sendResponse("0000");
+                    }
                 }
                 state = S_0;
                 break;
             case S_aM3:
                 if (c == '!') { // aM3!
-                    sendResponse("0012"); // 2 values in 1 second
-                    sensor = MLX90614;
-                    mlx_o = mlx.readObjectTempC();
-                    mlx_a = mlx.readAmbientTempC();
+                    if (mlx_ok) {
+                        sendResponse("0012"); // 2 values in 1 second
+                        sensor = MLX90614;
+                        mlx_o = mlx.readObjectTempC();
+                        mlx_a = mlx.readAmbientTempC();
+                    } else {
+                        sendResponse("0000");
+                    }
                 }
                 state = S_0;
                 break;
             case S_aM4:
                 if (c == '!') { // aM4!
-                    sendResponse("0012"); // 2 values in 1 second
-                    sensor = SHT31;
-                    sht_t = sht31.readTemperature();
-                    sht_h = sht31.readHumidity();
+                    if (sht31_ok) {
+                        sendResponse("0012"); // 2 values in 1 second
+                        sensor = SHT31;
+                        sht_t = sht31.readTemperature();
+                        sht_h = sht31.readHumidity();
+                    } else {
+                        sendResponse("0000");
+                    }
                 }
                 state = S_0;
                 break;
             case S_aM5:
                 if (c == '!') { // aM5!
-                    sendResponse("0011"); // 1 value in 1 second
-                    sensor = TMP117;
-                    tmp117.getEvent(&tmp117_event);
+                    if (tmp117_ok) {
+                        sendResponse("0011"); // 1 value in 1 second
+                        sensor = TMP117;
+                        tmp117.getEvent(&tmp117_event);
+                    } else {
+                        sendResponse("0000");
+                    }
                 }
                 state = S_0;
                 break;
             case S_aM6:
                 if (c == '!') { // aM6!
-                    sendResponse("0013"); // 3 values in 1 second
-                    sensor = VEML7700;
-                    veml_lux = veml.readLux();
-                    veml_white = veml.readWhite();
-                    veml_als = veml.readALS();
+                    if (veml_ok) {
+                        sendResponse("0013"); // 3 values in 1 second
+                        sensor = VEML7700;
+                        veml_lux = veml.readLux();
+                        veml_white = veml.readWhite();
+                        veml_als = veml.readALS();
+                    } else {
+                        sendResponse("0000");
+                    }
                 }
                 state = S_0;
                 break;
             case S_aM7:
                 if (c == '!') { // aM7!
-                    sendResponse("0011"); // 1 value in 1 second
-                    sensor = VL53L1;
-                    vl53l1.startRanging();
-                    vl_distance = vl53l1.getDistance();
-                    vl53l1.stopRanging();
+                    if (vl_ok) {
+                        sendResponse("0011"); // 1 value in 1 second
+                        sensor = VL53L1;
+                        vl.startRanging();
+                        vl_distance = vl.getDistance();
+                        vl.stopRanging();
+                    } else {
+                        sendResponse("0000");
+                    }
                 }
                 state = S_0;
                 break;
@@ -413,7 +448,7 @@ void loop()
                             sprintf(buffer, "%+d", vl_distance);
                             break;
                         case MLX90614:
-                            sprintf(buffer, "%+.2f%+.2f", mlx_a, mlx_o);
+                            sprintf(buffer, "%+.2f%+.2f", mlx_o, mlx_a);
                             break;
                         case VEML7700:
                             sprintf(buffer, "%+.2f%+.2f%+u", veml_lux, veml_white, veml_als);
