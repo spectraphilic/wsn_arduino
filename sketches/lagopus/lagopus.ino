@@ -235,8 +235,9 @@ void loop()
     float mlx_a, mlx_o;
     float sht_t, sht_h;
     float veml_lux, veml_white; uint16_t veml_als;
-    sensors_event_t temp; // TMP117
-    int distance;
+    sensors_event_t tmp117_event;
+    sensors_event_t icm_accel, icm_gyro, icm_mag, icm_temp;
+    int distance; // XXX
 
     state = S_0;
     while (1) {
@@ -333,7 +334,7 @@ void loop()
                 if (c == '!') { // aM2!
                     sendResponse("0011"); // 1 value in 1 second
                     sensor = TMP117;
-                    tmp117.getEvent(&temp);
+                    tmp117.getEvent(&tmp117_event);
                 }
                 state = S_0;
                 break;
@@ -349,7 +350,7 @@ void loop()
                 break;
             case S_aM4:
                 if (c == '!') { // aM4!
-                    sendResponse("0021"); // 2 values in 1 second
+                    sendResponse("0012"); // 2 values in 1 second
                     sensor = MLX90614;
                     bool success = mlx.read();
                     if (success) {
@@ -363,7 +364,7 @@ void loop()
                 break;
             case S_aM5:
                 if (c == '!') { // aM5!
-                    sendResponse("0031"); // 3 values in 1 second
+                    sendResponse("0013"); // 3 values in 1 second
                     sensor = VEML7700;
                     veml_lux = veml.readLux();
                     veml_white = veml.readWhite();
@@ -373,7 +374,7 @@ void loop()
                 break;
             case S_aM6:
                 if (c == '!') { // aM6!
-                    sendResponse("003c"); // 12 values in 1 second FIXME
+                    sendResponse("001c"); // 12 values in 1 second FIXME
                     sensor = AS7341;
                     ok = as7341.readAllChannels();
                     if (! ok) {
@@ -384,8 +385,9 @@ void loop()
                 break;
             case S_aM7:
                 if (c == '!') { // aM7!
+                    sendResponse("001a"); // 10 values in 1 second
                     sensor = ICM20X;
-                    // TODO
+                    icm.getEvent(&icm_accel, &icm_gyro, &icm_temp, &icm_mag);
                 }
                 state = S_0;
                 break;
@@ -412,7 +414,7 @@ void loop()
                             sprintf(buffer, "%+.2f%+.2f", sht_t, sht_h);
                             break;
                         case TMP117:
-                            sprintf(buffer, "%+.2f", temp.temperature);
+                            sprintf(buffer, "%+.2f", tmp117_event.temperature);
                             break;
                         case VL53L1:
                             sprintf(buffer, "%+d", distance);
@@ -431,7 +433,17 @@ void loop()
                             }
                             break;
                         case ICM20X:
-                            // TODO
+                            sprintf(buffer, "%+.2f%+.2f%+.2f%+.2f%+.2f%+.2f%+.2f%+.2f%+.2f%+.2f",
+                                    icm_temp.temperature,
+                                    icm_accel.acceleration.x,
+                                    icm_accel.acceleration.y,
+                                    icm_accel.acceleration.z,
+                                    icm_mag.magnetic.x,
+                                    icm_mag.magnetic.y,
+                                    icm_mag.magnetic.z,
+                                    icm_gyro.gyro.x,
+                                    icm_gyro.gyro.y,
+                                    icm_gyro.gyro.z);
                             break;
                     }
                     sendResponse(buffer);
