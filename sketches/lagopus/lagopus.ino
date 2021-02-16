@@ -53,28 +53,28 @@ enum states {
     S_aI,
     S_aA,
     S_aAb,
-    S_aM,  // BME280
-    S_aM1, // SHT31
-    S_aM2, // TMP117
-    S_aM3, // VL53L1
-    S_aM4, // MLX90614
-    S_aM5, // VEML7700
-    S_aM6, // AS7341
-    S_aM7, // ICM20X
+    S_aM,  // AS7341
+    S_aM1, // BME280
+    S_aM2, // ICM20X
+    S_aM3, // MLX90614
+    S_aM4, // SHT31
+    S_aM5, // TMP117
+    S_aM6, // VEML7700
+    S_aM7, // VL53L1
     S_aMn, // A SDI-12 sensor must reply to all aMn commands
     S_aD,
     S_aD0,
 };
 
 enum sensors {
+    AS7341,
     BME280,
+    ICM20X,
+    MLX90614,
     SHT31,
     TMP117,
-    VL53L1,
-    MLX90614,
     VEML7700,
-    AS7341,
-    ICM20X,
+    VL53L1,
 };
 
 // Global variables
@@ -294,11 +294,12 @@ void loop()
                 break;
             case S_aM:
                 if (c == '!') { // aM!
-                    sendResponse("0013"); // 3 values in 1 second
-                    sensor = BME280;
-                    bme_t = bme.readTemperature();
-                    bme_p = bme.readPressure() / 100.0F;
-                    bme_h = bme.readHumidity();
+                    sendResponse("001a"); // 10 values in 1 second FIXME
+                    sensor = AS7341;
+                    ok = as7341.readAllChannels();
+                    if (! ok) {
+                        // TODO Handle error
+                    }
                 } else if (c == '1') {
                     state = S_aM1;
                 } else if (c == '2') {
@@ -321,33 +322,24 @@ void loop()
                 break;
             case S_aM1:
                 if (c == '!') { // aM1!
-                    sendResponse("0012"); // 2 values in 1 second
-                    sensor = SHT31;
-                    sht_t = sht31.readTemperature();
-                    sht_h = sht31.readHumidity();
+                    sendResponse("0013"); // 3 values in 1 second
+                    sensor = BME280;
+                    bme_t = bme.readTemperature();
+                    bme_p = bme.readPressure() / 100.0F;
+                    bme_h = bme.readHumidity();
                 }
                 state = S_0;
                 break;
             case S_aM2:
                 if (c == '!') { // aM2!
-                    sendResponse("0011"); // 1 value in 1 second
-                    sensor = TMP117;
-                    tmp117.getEvent(&tmp117_event);
+                    sendResponse("001a"); // 10 values in 1 second
+                    sensor = ICM20X;
+                    icm.getEvent(&icm_accel, &icm_gyro, &icm_temp, &icm_mag);
                 }
                 state = S_0;
                 break;
             case S_aM3:
                 if (c == '!') { // aM3!
-                    sendResponse("0011"); // 1 value in 1 second
-                    sensor = VL53L1;
-                    vl53l1.startRanging();
-                    vl_distance = vl53l1.getDistance();
-                    vl53l1.stopRanging();
-                }
-                state = S_0;
-                break;
-            case S_aM4:
-                if (c == '!') { // aM4!
                     sendResponse("0012"); // 2 values in 1 second
                     sensor = MLX90614;
                     mlx_o = mlx.readObjectTempC();
@@ -355,8 +347,25 @@ void loop()
                 }
                 state = S_0;
                 break;
+            case S_aM4:
+                if (c == '!') { // aM4!
+                    sendResponse("0012"); // 2 values in 1 second
+                    sensor = SHT31;
+                    sht_t = sht31.readTemperature();
+                    sht_h = sht31.readHumidity();
+                }
+                state = S_0;
+                break;
             case S_aM5:
                 if (c == '!') { // aM5!
+                    sendResponse("0011"); // 1 value in 1 second
+                    sensor = TMP117;
+                    tmp117.getEvent(&tmp117_event);
+                }
+                state = S_0;
+                break;
+            case S_aM6:
+                if (c == '!') { // aM6!
                     sendResponse("0013"); // 3 values in 1 second
                     sensor = VEML7700;
                     veml_lux = veml.readLux();
@@ -365,22 +374,13 @@ void loop()
                 }
                 state = S_0;
                 break;
-            case S_aM6:
-                if (c == '!') { // aM6!
-                    sendResponse("001c"); // 12 values in 1 second FIXME
-                    sensor = AS7341;
-                    ok = as7341.readAllChannels();
-                    if (! ok) {
-                        // TODO Handle error
-                    }
-                }
-                state = S_0;
-                break;
             case S_aM7:
                 if (c == '!') { // aM7!
-                    sendResponse("001a"); // 10 values in 1 second
-                    sensor = ICM20X;
-                    icm.getEvent(&icm_accel, &icm_gyro, &icm_temp, &icm_mag);
+                    sendResponse("0011"); // 1 value in 1 second
+                    sensor = VL53L1;
+                    vl53l1.startRanging();
+                    vl_distance = vl53l1.getDistance();
+                    vl53l1.stopRanging();
                 }
                 state = S_0;
                 break;
@@ -421,7 +421,7 @@ void loop()
                         case AS7341: // FIXME Too many fields for 1 data command
                             as7341.getAllChannels(as7341_channels);
                             p = buffer;
-                            for (int i = 0; i < 12; i++) {
+                            for (int i = 0; i < 10; i++) {
                                 p += sprintf(p, "%+u", as7341_channels[i]);
                             }
                             break;
