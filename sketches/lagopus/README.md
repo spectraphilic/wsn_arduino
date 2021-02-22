@@ -39,3 +39,6 @@ https://learn.adafruit.com/adafruit-feather-m0-adalogger/pinouts
 
 QT Py pins:
 https://learn.adafruit.com/adafruit-qt-py/pinouts
+
+Waspmote pins (page 57):
+`https://www.libelium.com/downloads/documentation/waspmote_technical_guide.pdf`

@@ -9,15 +9,12 @@
  * https://learn.adafruit.com/adafruit-qt-py/pinouts
  */
 
-#include <SDI12.h>
-
-
 //#define BLINK
-//#define DEBUG
+//#define TEST
 #define DATA_PIN 5   /*!< The pin of the SDI-12 data bus */
 #define POWER_PIN -1 /*!< The sensor power pin (or -1 if not switching power) */
 
-#ifdef DEBUG
+#ifdef TEST
     #define PRINT(...) Serial.print(__VA_ARGS__)
     #define PRINTLN(...) Serial.println(__VA_ARGS__)
 #else
@@ -26,7 +23,6 @@
 #endif
 
 // Global objects
-SDI12 sdi12(DATA_PIN);
 
 
 // States of the state machine for parsing SDI-12 messages
@@ -59,12 +55,13 @@ enum sensors {
     TMP117,
     VEML7700,
     VL53L1,
+    NOSENSOR, // special value to signal an error
 };
 
 // Global variables
 char address = '5';
 enum states state;
-enum sensors sensor;
+enum sensors sensor = NOSENSOR;
 
 
 void setup()
@@ -74,18 +71,12 @@ void setup()
     digitalWrite(LED_BUILTIN, LOW);
 #endif
 
-#ifdef DEBUG
+#ifdef TEST
     Serial.begin(9600); // The baudrate of Serial monitor is set in 9600
     while (!Serial); // Waiting for Serial Monitor
 #endif
 
-    // Initialize SDI-12 interface
-    sdi12.begin();
-    delay(500);
-    sdi12.forceListen();  // sets SDIPIN as input to prepare for incoming message
-    PRINTLN("SDI-12    OK");
-
-    // Intialize sensors
+    sdi12_init();
     as7341_init();
     bme280_init();
     icm_init();
@@ -94,16 +85,17 @@ void setup()
     tmp117_init();
     veml7700_init();
     vl53l1_init();
+
+    PRINTLN("\nTest...\n");
 }
 
 
 int getChar()
 {
     while (1) {
-        int value = sdi12.read();
-        if (value >= 0) {
+        int value = sdi12_read();
+        if (value >= 0)
             return value;
-        }
     }
 }
 
@@ -114,7 +106,7 @@ void sendResponse(const char *msg)
     response[0] = address;
     strcpy(response+1, msg);
     strcat(response, "\r\n");
-    sdi12.sendResponse(response);
+    sdi12_send(response);
     state = S_0; // Reset automata state
 }
 
@@ -198,51 +190,43 @@ void loop()
                 }
                 break;
             case S_aM1:
-                if (c == '!') {
+                if (c == '!')
                     bme280_measure();
-                }
                 state = S_0;
                 break;
             case S_aM2:
-                if (c == '!') {
+                if (c == '!')
                     icm_measure();
-                }
                 state = S_0;
                 break;
             case S_aM3:
-                if (c == '!') {
+                if (c == '!')
                     mlx_measure();
-                }
                 state = S_0;
                 break;
             case S_aM4:
-                if (c == '!') { // aM4!
+                if (c == '!')
                     sht31_measure();
-                }
                 state = S_0;
                 break;
             case S_aM5:
-                if (c == '!') { // aM5!
+                if (c == '!')
                     tmp117_measure();
-                }
                 state = S_0;
                 break;
             case S_aM6:
-                if (c == '!') { // aM6!
+                if (c == '!')
                     veml7700_measure();
-                }
                 state = S_0;
                 break;
             case S_aM7:
-                if (c == '!') { // aM7!
+                if (c == '!')
                     vl53l1_measure();
-                }
                 state = S_0;
                 break;
             case S_aMn:
-                if (c == '!') { // aMn!
+                if (c == '!')
                     sendResponse("0000");
-                }
                 state = S_0;
                 break;
             case S_aD:
@@ -254,30 +238,41 @@ void loop()
                     switch (sensor) {
                         case AS7341:
                             as7341_data(buffer);
+                            sendResponse(buffer);
                             break;
                         case BME280:
                             bme280_data(buffer);
+                            sendResponse(buffer);
                             break;
                         case ICM20X:
                             icm_data(buffer);
+                            sendResponse(buffer);
                             break;
                         case MLX90614:
                             mlx_data(buffer);
+                            sendResponse(buffer);
                             break;
                         case SHT31:
                             sht31_data(buffer);
+                            sendResponse(buffer);
                             break;
                         case TMP117:
                             tmp117_data(buffer);
+                            sendResponse(buffer);
                             break;
                         case VEML7700:
                             veml7700_data(buffer);
+                            sendResponse(buffer);
                             break;
                         case VL53L1:
                             vl53l1_data(buffer);
+                            sendResponse(buffer);
+                            break;
+                        case NOSENSOR: // No sensor has been selected yet, or it's not available
+                            PRINT("\n");
                             break;
                     }
-                    sendResponse(buffer);
+                    sensor = NOSENSOR;
                 }
                 state = S_0;
                 break;
