@@ -42,3 +42,30 @@ https://learn.adafruit.com/adafruit-qt-py/pinouts
 
 Waspmote pins (page 57):
 `https://www.libelium.com/downloads/documentation/waspmote_technical_guide.pdf`
+
+
+# TODO
+
+To do:
+
+- Implement and use concurrent measurements instead of regular measurements.
+  Because they allow to return more than 9 data points, and the response size
+  limit is 75 chars instead of 35 chars.
+
+- Send at most 35 chars (or 75 chars for concurrent measurements) in response
+  to a measure/data sequence. If there are more data points that fit in 35/75
+  chars the data logger must issue aD1...aD9 commands to retrieve all the data.
+
+Standard required features not yet implemented:
+
+- Service requests
+- Concurrent measurements (aC!atttnn\r\n)
+- Continuous Measurements (aR0!)
+- Verification (aV!)
+- CRC
+- Extended commands
+- High volume commands
+
+For the AS7341 and ICM20X we send more data than allowed by the SDI-12 spec:
+
+- More than 9 data points

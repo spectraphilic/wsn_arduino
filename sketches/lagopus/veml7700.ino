@@ -19,10 +19,10 @@ void veml7700_measure()
 {
     if (veml_ok) {
         sendResponse("0013"); // 3 values in 1 second
-        sensor = VEML7700;
         veml_lux = veml.readLux();
         veml_white = veml.readWhite();
         veml_als = veml.readALS();
+        sensor = VEML7700;
     } else {
         sendResponse("0000");
     }

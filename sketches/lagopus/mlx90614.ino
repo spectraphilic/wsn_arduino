@@ -20,9 +20,9 @@ void mlx_measure()
 {
     if (mlx_ok) {
         sendResponse("0012"); // 2 values in 1 second
-        sensor = MLX90614;
         mlx_o = mlx.readObjectTempC();
         mlx_a = mlx.readAmbientTempC();
+        sensor = MLX90614;
     } else {
         sendResponse("0000");
     }

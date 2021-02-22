@@ -19,10 +19,10 @@ void vl53l1_measure()
 {
     if (vl_ok) {
         sendResponse("0011"); // 1 value in 1 second
-        sensor = VL53L1;
         vl.startRanging();
         vl_distance = vl.getDistance();
         vl.stopRanging();
+        sensor = VL53L1;
     } else {
         sendResponse("0000");
     }

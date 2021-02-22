@@ -55,13 +55,13 @@ enum sensors {
     TMP117,
     VEML7700,
     VL53L1,
-    NOSENSOR, // special value to signal an error
+    ABORT, // special value to abort a measurement
 };
 
 // Global variables
 char address = '5';
 enum states state;
-enum sensors sensor = NOSENSOR;
+enum sensors sensor = ABORT;
 
 
 void setup()
@@ -157,7 +157,7 @@ void loop()
                 break;
             case S_aI:
                 if (c == '!') { // aI!
-                    sendResponse("14UOSLOGEOLAGOPU000");
+                    sendResponse("13UOSLOGEOLAGOPU000");
                 }
                 state = S_0;
                 break;
@@ -268,11 +268,11 @@ void loop()
                             vl53l1_data(buffer);
                             sendResponse(buffer);
                             break;
-                        case NOSENSOR: // No sensor has been selected yet, or it's not available
-                            PRINT("\n");
+                        case ABORT: // No sensor has been selected yet, or it's not available
+                            sendResponse(""); // Abort (4.4.5.1 Aborting a Measurement)
                             break;
                     }
-                    sensor = NOSENSOR;
+                    sensor = ABORT;
                 }
                 state = S_0;
                 break;

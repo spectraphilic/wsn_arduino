@@ -19,8 +19,8 @@ void tmp117_measure()
 {
     if (tmp117_ok) {
         sendResponse("0011"); // 1 value in 1 second
-        sensor = TMP117;
-        tmp117.getEvent(&tmp117_event);
+        bool ok = tmp117.getEvent(&tmp117_event);
+        sensor = ok ? TMP117 : ABORT;
     } else {
         sendResponse("0000");
     }

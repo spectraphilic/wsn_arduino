@@ -20,8 +20,8 @@ void icm_measure()
 {
     if (icm_ok) {
         sendResponse("001a"); // FIXME 10 values in 1 second
-        sensor = ICM20X;
-        icm.getEvent(&icm_accel, &icm_gyro, &icm_temp, &icm_mag);
+        bool ok = icm.getEvent(&icm_accel, &icm_gyro, &icm_temp, &icm_mag);
+        sensor = ok ? ICM20X : ABORT;
     } else {
         sendResponse("0000");
     }

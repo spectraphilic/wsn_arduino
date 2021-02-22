@@ -19,10 +19,11 @@ void bme280_measure()
 {
     if (bme_ok) {
         sendResponse("0013"); // 3 values in 1 second
-        sensor = BME280;
         bme_t = bme.readTemperature();
         bme_p = bme.readPressure() / 100.0F;
         bme_h = bme.readHumidity();
+        // XXX Send NAN instead of aborting?
+        sensor = (bme_t != NAN && bme_p != NAN && bme_h != NAN) ? BME280 : ABORT;
     } else {
         sendResponse("0000");
     }

@@ -23,9 +23,9 @@ void sht31_measure()
 {
     if (sht31_ok) {
         sendResponse("0012"); // 2 values in 1 second
-        sensor = SHT31;
         sht_t = sht31.readTemperature();
         sht_h = sht31.readHumidity();
+        sensor = (sht_t != NAN && sht_h != NAN) ? SHT31 : ABORT;
     } else {
         sendResponse("0000");
     }

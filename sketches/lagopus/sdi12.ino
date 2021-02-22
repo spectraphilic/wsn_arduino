@@ -28,6 +28,7 @@ int sdi12_read() {
     static int i = 0;
     char *messages = {
         "?!"
+        "5!"
         "5I!"
         "5M!"  "5D0!"
         "5M1!" "5D0!"

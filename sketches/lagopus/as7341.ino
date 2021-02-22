@@ -18,11 +18,8 @@ void as7341_measure()
 {
     if (as7341_ok) {
         sendResponse("001a"); // FIXME 10 values in 1 second
-        sensor = AS7341;
         bool ok = as7341.readAllChannels();
-        if (! ok) {
-            // TODO Handle error
-        }
+        sensor = ok ? AS7341 : ABORT;
     } else {
         sendResponse("0000");
     }
