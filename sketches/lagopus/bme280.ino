@@ -20,9 +20,9 @@ void bme280_measure()
     if (bme_ok) {
         sendResponse("0013"); // 3 values in 1 second
         bme_t = bme.readTemperature();
-        bme_p = bme.readPressure() / 100.0F;
         bme_h = bme.readHumidity();
-        bool ok = (bme_t != NAN && bme_p != NAN && bme_h != NAN);
+        bme_p = bme.readPressure() / 100.0F;
+        bool ok = (bme_t != NAN && bme_h != NAN && bme_p != NAN);
         sensor = ok ? BME280 : ABORT;
     } else {
         sendResponse("0000");
@@ -31,5 +31,5 @@ void bme280_measure()
 
 void bme280_data(char *buffer)
 {
-    sprintf(buffer, "%+.2f%+.2f%+.2f", bme_t, bme_p, bme_h);
+    sprintf(buffer, "%+.2f%+.2f%+.2f", bme_t, bme_h, bme_p);
 }
