@@ -10,9 +10,9 @@ void icm_init()
 {
     icm_ok = icm.begin_I2C();
     if (icm_ok) {
-        PRINTLN("ICM20948  OK");
+        PRINTLN("2: ICM20948  OK");
     } else {
-        PRINTLN("ICM20948  ERROR");
+        PRINTLN("2: ICM20948  ERROR");
     }
 }
 

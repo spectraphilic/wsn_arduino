@@ -8,6 +8,7 @@ Install the following libraries with the Arduni library manager:
 - Adafruit MLX90614
 - Adafruit SHT31
 - Adafruit TMP117
+- Adafruit VCNL4040
 - Adafruit VEML7700
 - Sparkfun VL53L1X
 
@@ -46,26 +47,23 @@ Waspmote pins (page 57):
 
 # TODO
 
-To do:
+Ways we deviate from the SDI-12 standard:
 
-- Implement and use concurrent measurements instead of regular measurements.
-  Because they allow to return more than 9 data points, and the response size
-  limit is 75 chars instead of 35 chars.
+- We send more than 9 datapoints to M commands (AS7341 and ICM20X)
+- We send more than 35 chars to M-D commands (AS7341 and ICM20X)
+- We don't support some required features (see below)
 
-- Send at most 35 chars (or 75 chars for concurrent measurements) in response
-  to a measure/data sequence. If there are more data points that fit in 35/75
-  chars the data logger must issue aD1...aD9 commands to retrieve all the data.
-
-Standard required features not yet implemented:
+Required features (from 1.3 version) we don't support:
 
 - Service requests
 - Concurrent measurements (aC!atttnn\r\n)
 - Continuous Measurements (aR0!)
 - Verification (aV!)
 - CRC
-- Extended commands
-- High volume commands
 
-For the AS7341 and ICM20X we send more data than allowed by the SDI-12 spec:
+Things we may do:
 
-- More than 9 data points
+- Use concurrent commands, which allow for more data points (1-99) are longer D
+  responses (75 chars)
+- Support D1-9 commands, send no more than 35/75 chars for a single D command.
+- Support service requests, for faster communication.

@@ -9,9 +9,9 @@ void bme280_init()
 {
     bme_ok = bme.begin(0x77);
     if (bme_ok) {
-        PRINTLN("BME280    OK");
+        PRINTLN("1: BME280    OK");
     } else {
-        PRINTLN("BME280    ERROR");
+        PRINTLN("1: BME280    ERROR");
     }
 }
 
@@ -22,8 +22,8 @@ void bme280_measure()
         bme_t = bme.readTemperature();
         bme_p = bme.readPressure() / 100.0F;
         bme_h = bme.readHumidity();
-        // XXX Send NAN instead of aborting?
-        sensor = (bme_t != NAN && bme_p != NAN && bme_h != NAN) ? BME280 : ABORT;
+        bool ok = (bme_t != NAN && bme_p != NAN && bme_h != NAN);
+        sensor = ok ? BME280 : ABORT;
     } else {
         sendResponse("0000");
     }

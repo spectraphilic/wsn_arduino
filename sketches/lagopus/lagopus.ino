@@ -39,8 +39,9 @@ enum states {
     S_aM3, // MLX90614
     S_aM4, // SHT31
     S_aM5, // TMP117
-    S_aM6, // VEML7700
-    S_aM7, // VL53L1
+    S_aM6, // VCNL4040
+    S_aM7, // VEML7700
+    S_aM8, // VL53L1
     S_aMn, // A SDI-12 sensor must reply to all aMn commands
     S_aD,
     S_aD0,
@@ -53,6 +54,7 @@ enum sensors {
     MLX90614,
     SHT31,
     TMP117,
+    VCNL4040,
     VEML7700,
     VL53L1,
     ABORT, // special value to abort a measurement
@@ -83,6 +85,7 @@ void setup()
     mlx_init();
     sht31_init();
     tmp117_init();
+    vcnl4040_init();
     veml7700_init();
     vl53l1_init();
 
@@ -115,7 +118,7 @@ void loop()
 {
     int c;
     char newAddress;
-    char buffer[80];
+    char buffer[100];
 
     state = S_0;
     while (1) {
@@ -181,7 +184,7 @@ void loop()
                     case '5': state = S_aM5; break;
                     case '6': state = S_aM6; break;
                     case '7': state = S_aM7; break;
-                    case '8': state = S_aMn; break; // not used
+                    case '8': state = S_aM8; break;
                     case '9': state = S_aMn; break; // not used
                     case '!':
                         as7341_measure();
@@ -216,10 +219,15 @@ void loop()
                 break;
             case S_aM6:
                 if (c == '!')
-                    veml7700_measure();
+                    vcnl4040_measure();
                 state = S_0;
                 break;
             case S_aM7:
+                if (c == '!')
+                    veml7700_measure();
+                state = S_0;
+                break;
+            case S_aM8:
                 if (c == '!')
                     vl53l1_measure();
                 state = S_0;
@@ -238,40 +246,36 @@ void loop()
                     switch (sensor) {
                         case AS7341:
                             as7341_data(buffer);
-                            sendResponse(buffer);
                             break;
                         case BME280:
                             bme280_data(buffer);
-                            sendResponse(buffer);
                             break;
                         case ICM20X:
                             icm_data(buffer);
-                            sendResponse(buffer);
                             break;
                         case MLX90614:
                             mlx_data(buffer);
-                            sendResponse(buffer);
                             break;
                         case SHT31:
                             sht31_data(buffer);
-                            sendResponse(buffer);
                             break;
                         case TMP117:
                             tmp117_data(buffer);
-                            sendResponse(buffer);
+                            break;
+                        case VCNL4040:
+                            vcnl4040_data(buffer);
                             break;
                         case VEML7700:
                             veml7700_data(buffer);
-                            sendResponse(buffer);
                             break;
                         case VL53L1:
                             vl53l1_data(buffer);
-                            sendResponse(buffer);
                             break;
                         case ABORT: // No sensor has been selected yet, or it's not available
-                            sendResponse(""); // Abort (4.4.5.1 Aborting a Measurement)
+                            buffer[0] = '\0'; // Abort (4.4.5.1 Aborting a Measurement)
                             break;
                     }
+                    sendResponse(buffer);
                     sensor = ABORT;
                 }
                 state = S_0;

@@ -39,6 +39,7 @@ int sdi12_read() {
         "5M6!" "5D0!"
         "5M7!" "5D0!"
         "5M8!" "5D0!"
+        "5M9!" "5D0!"
     };
 
     while (i < strlen(messages)) {

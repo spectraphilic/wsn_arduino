@@ -9,9 +9,9 @@ void tmp117_init()
 {
     tmp117_ok = tmp117.begin();
     if (tmp117_ok) {
-        PRINTLN("TMP117    OK");
+        PRINTLN("5: TMP117    OK");
     } else {
-        PRINTLN("TMP117    ERROR");
+        PRINTLN("5: TMP117    ERROR");
     }
 }
 

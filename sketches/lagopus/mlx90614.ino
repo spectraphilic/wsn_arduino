@@ -10,9 +10,9 @@ void mlx_init()
 {
     mlx_ok = mlx.begin();
     if (mlx_ok) {
-        PRINTLN("MLX90614  OK");
+        PRINTLN("3: MLX90614  OK");
     } else {
-        PRINTLN("MLX90614  ERROR");
+        PRINTLN("3: MLX90614  ERROR");
     }
 }
 
@@ -22,7 +22,8 @@ void mlx_measure()
         sendResponse("0012"); // 2 values in 1 second
         mlx_o = mlx.readObjectTempC();
         mlx_a = mlx.readAmbientTempC();
-        sensor = MLX90614;
+        bool ok = (mlx_o != NAN && mlx_a != NAN);
+        sensor = ok ? MLX90614 : ABORT;
     } else {
         sendResponse("0000");
     }

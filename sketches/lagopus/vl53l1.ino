@@ -9,9 +9,9 @@ void vl53l1_init()
 {
     vl_ok = ! vl.begin();
     if (vl_ok) {
-        PRINTLN("VL54L1X   OK");
+        PRINTLN("9: VL54L1X   OK");
     } else {
-        PRINTLN("VL54L1X   ERROR");
+        PRINTLN("9: VL54L1X   ERROR");
     }
 }
 

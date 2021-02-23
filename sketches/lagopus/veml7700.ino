@@ -3,15 +3,16 @@
 
 Adafruit_VEML7700 veml;
 bool veml_ok;
-float veml_lux, veml_white; uint16_t veml_als;
+float veml_lux, veml_white;
+uint16_t veml_als;
 
 void veml7700_init()
 {
     veml_ok = veml.begin();
     if (veml_ok) {
-        PRINTLN("VEML7700  OK");
+        PRINTLN("7: VEML7700  OK");
     } else {
-        PRINTLN("VEML7700  ERROR");
+        PRINTLN("7: VEML7700  ERROR");
     }
 }
 
@@ -22,7 +23,8 @@ void veml7700_measure()
         veml_lux = veml.readLux();
         veml_white = veml.readWhite();
         veml_als = veml.readALS();
-        sensor = VEML7700;
+        bool ok = (veml_lux != NAN && veml_white != NAN);
+        sensor = ok ? VEML7700 : ABORT;
     } else {
         sendResponse("0000");
     }

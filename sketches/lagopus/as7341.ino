@@ -8,9 +8,9 @@ void as7341_init()
 {
     as7341_ok = as7341.begin();
     if (as7341_ok) {
-        PRINTLN("AS7341    OK");
+        PRINTLN("0: AS7341    OK");
     } else {
-        PRINTLN("AS7341    ERROR");
+        PRINTLN("0: AS7341    ERROR");
     }
 }
 

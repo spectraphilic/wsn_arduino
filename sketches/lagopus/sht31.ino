@@ -9,13 +9,13 @@ void sht31_init()
 {
     sht31_ok = sht31.begin(0x44); // Set to 0x45 for alternate i2c addr
     if (sht31_ok) {
-        PRINTLN("SHT31     OK");
+        PRINTLN("4: SHT31     OK");
         // Enable the heater for 1s
         sht31.heater(true);
         delay(1000);
         sht31.heater(false);
     } else {
-        PRINTLN("SHT31     ERROR");
+        PRINTLN("4: SHT31     ERROR");
     }
 }
 
@@ -25,7 +25,8 @@ void sht31_measure()
         sendResponse("0012"); // 2 values in 1 second
         sht_t = sht31.readTemperature();
         sht_h = sht31.readHumidity();
-        sensor = (sht_t != NAN && sht_h != NAN) ? SHT31 : ABORT;
+        bool ok = (sht_t != NAN && sht_h != NAN);
+        sensor = ok ? SHT31 : ABORT;
     } else {
         sendResponse("0000");
     }
