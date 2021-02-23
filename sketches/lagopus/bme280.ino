@@ -22,7 +22,7 @@ void bme280_measure()
         bme_t = bme.readTemperature();
         bme_h = bme.readHumidity();
         bme_p = bme.readPressure() / 100.0F;
-        bool ok = (bme_t != NAN && bme_h != NAN && bme_p != NAN);
+        bool ok = !isnan(bme_t) && !isnan(bme_h) && !isnan(bme_p);
         sensor = ok ? BME280 : ABORT;
     } else {
         sendResponse("0000");

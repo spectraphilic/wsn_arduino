@@ -22,7 +22,7 @@ void mlx_measure()
         sendResponse("0012"); // 2 values in 1 second
         mlx_o = mlx.readObjectTempC();
         mlx_a = mlx.readAmbientTempC();
-        bool ok = (mlx_o != NAN && mlx_a != NAN);
+        bool ok = !isnan(mlx_o) && !isnan(mlx_a);
         sensor = ok ? MLX90614 : ABORT;
     } else {
         sendResponse("0000");

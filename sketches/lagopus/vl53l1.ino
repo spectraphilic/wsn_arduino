@@ -3,7 +3,8 @@
 
 SFEVL53L1X vl;
 bool vl_ok;
-int vl_distance;
+const unsigned int vl_distances_n = 15;
+int vl_distances[vl_distances_n];
 
 void vl53l1_init()
 {
@@ -15,22 +16,34 @@ void vl53l1_init()
     }
 }
 
+
 void vl53l1_measure()
 {
-    if (vl_ok) {
-        sendResponse("0011"); // 1 value in 1 second
-        vl.startRanging();
-        while (!vl.checkForDataReady()) delay(1); // Wait for data ready
-        vl_distance = vl.getDistance();
-        vl.clearInterrupt();
-        vl.stopRanging();
-        sensor = VL53L1;
-    } else {
+    if (! vl_ok) {
         sendResponse("0000");
+        return;
     }
+
+    sendResponse("00215"); // 15 values in 2 seconds
+    vl.startRanging();
+
+    // Wait for data ready
+    for (int i = 0; i < vl_distances_n; i++) {
+        while (! vl.checkForDataReady()) // XXX Implement a timeout??
+            delay(1);
+
+        vl_distances[i] = vl.getDistance();
+    }
+
+    vl.clearInterrupt();
+    vl.stopRanging();
+    sensor = VL53L1;
 }
 
 void vl53l1_data(char *buffer)
 {
-    sprintf(buffer, "%+d", vl_distance);
+    char *p = buffer;
+    for (int i = 0; i < vl_distances_n; i++) {
+        p += sprintf(p, "%+d", vl_distances[i]);
+    }
 }

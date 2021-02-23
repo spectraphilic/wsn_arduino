@@ -23,7 +23,7 @@ void veml7700_measure()
         veml_lux = veml.readLux();
         veml_white = veml.readWhite();
         veml_als = veml.readALS();
-        bool ok = (veml_lux != NAN && veml_white != NAN);
+        bool ok = !isnan(veml_lux) && !isnan(veml_white);
         sensor = ok ? VEML7700 : ABORT;
     } else {
         sendResponse("0000");

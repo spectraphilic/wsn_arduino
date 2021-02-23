@@ -25,7 +25,7 @@ void sht31_measure()
         sendResponse("0012"); // 2 values in 1 second
         sht_t = sht31.readTemperature();
         sht_h = sht31.readHumidity();
-        bool ok = (sht_t != NAN && sht_h != NAN);
+        bool ok = !isnan(sht_t) && !isnan(sht_h);
         sensor = ok ? SHT31 : ABORT;
     } else {
         sendResponse("0000");
@@ -34,8 +34,5 @@ void sht31_measure()
 
 void sht31_data(char *buffer)
 {
-    if (isnan(sht_t) || isnan(sht_h)) {
-        // TODO What should we send?
-    }
     sprintf(buffer, "%+.2f%+.2f", sht_t, sht_h);
 }
