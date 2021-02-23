@@ -4,7 +4,7 @@
 SFEVL53L1X vl;
 bool vl_ok;
 const unsigned int vl_distances_n = 15;
-int vl_distances[vl_distances_n];
+uint16_t vl_distances[vl_distances_n];
 
 void vl53l1_init()
 {
@@ -44,6 +44,6 @@ void vl53l1_data(char *buffer)
 {
     char *p = buffer;
     for (int i = 0; i < vl_distances_n; i++) {
-        p += sprintf(p, "%+d", vl_distances[i]);
+        p += sprintf(p, "+%u", vl_distances[i]);
     }
 }
