@@ -9,10 +9,8 @@
  * https://learn.adafruit.com/adafruit-qt-py/pinouts
  */
 
-//#define BLINK
 //#define TEST
 #define DATA_PIN 5   /*!< The pin of the SDI-12 data bus */
-#define POWER_PIN -1 /*!< The sensor power pin (or -1 if not switching power) */
 
 #ifdef TEST
     #define PRINT(...) Serial.print(__VA_ARGS__)
@@ -68,11 +66,6 @@ enum sensors sensor = ABORT;
 
 void setup()
 {
-#ifdef BLINK
-    pinMode(LED_BUILTIN, OUTPUT);
-    digitalWrite(LED_BUILTIN, LOW);
-#endif
-
 #ifdef TEST
     Serial.begin(9600); // The baudrate of Serial monitor is set in 9600
     while (!Serial); // Waiting for Serial Monitor
