@@ -17,7 +17,7 @@ void as7341_init()
 void as7341_measure()
 {
     if (as7341_ok) {
-        sendResponse("001a"); // FIXME 10 values in 1 second
+        sendResponse("00110"); // 10 values in 1 second
         bool ok = as7341.readAllChannels();
         sensor = ok ? AS7341 : ABORT;
     } else {
