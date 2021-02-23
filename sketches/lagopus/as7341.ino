@@ -32,6 +32,6 @@ void as7341_data(char *buffer)
 
     char *p = buffer;
     for (int i = 0; i < 10; i++) {
-        p += sprintf(p, "%+u", as7341_channels[i]);
+        p += sprintf(p, "+%u", as7341_channels[i]);
     }
 }

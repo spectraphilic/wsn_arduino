@@ -30,5 +30,5 @@ void veml7700_measure()
 
 void veml7700_data(char *buffer)
 {
-    sprintf(buffer, "%+.2f%+.2f%+u", veml_lux, veml_white, veml_als);
+    sprintf(buffer, "%+.2f%+.2f+%u", veml_lux, veml_white, veml_als);
 }
