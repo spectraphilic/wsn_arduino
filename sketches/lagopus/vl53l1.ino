@@ -3,7 +3,7 @@
 
 SFEVL53L1X vl;
 bool vl_ok;
-const unsigned int vl_distances_n = 15;
+const unsigned int vl_distances_n = 10;
 uint16_t vl_distances[vl_distances_n];
 
 void vl53l1_init()
@@ -24,7 +24,7 @@ void vl53l1_measure()
         return;
     }
 
-    sendResponse("00215"); // 15 values in 2 seconds
+    sendResponse("00210"); // 10 values in 2 seconds
     vl.startRanging();
 
     // Wait for data ready

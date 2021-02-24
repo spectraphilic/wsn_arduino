@@ -20,8 +20,6 @@
     #define PRINTLN(...)
 #endif
 
-// Global objects
-
 
 // States of the state machine for parsing SDI-12 messages
 enum states {
