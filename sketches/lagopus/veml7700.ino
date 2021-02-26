@@ -2,7 +2,7 @@
 
 
 Adafruit_VEML7700 veml;
-bool veml_ok;
+bool veml_ok = false;
 float veml_lux, veml_white;
 uint16_t veml_als;
 

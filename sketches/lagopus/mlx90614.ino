@@ -2,7 +2,7 @@
 
 
 Adafruit_MLX90614 mlx;
-bool mlx_ok;
+bool mlx_ok = false;
 double mlx_o, mlx_a;
 
 

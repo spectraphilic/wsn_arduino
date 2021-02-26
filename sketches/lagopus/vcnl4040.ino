@@ -2,7 +2,7 @@
 
 
 Adafruit_VCNL4040 vcnl;
-bool vcnl_ok;
+bool vcnl_ok = false;
 uint16_t vcnl_prox, vcnl_lux, vcnl_white;
 
 

@@ -2,7 +2,7 @@
 
 
 Adafruit_TMP117 tmp117;
-bool tmp117_ok;
+bool tmp117_ok = false;
 sensors_event_t tmp117_event;
 
 void tmp117_init()

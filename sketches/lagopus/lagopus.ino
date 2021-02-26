@@ -72,7 +72,7 @@ void setup()
     sdi12_init();
     as7341_init();
     bme280_init();
-    icm_init();
+    //icm_init();
     mlx_init();
     sht31_init();
     tmp117_init();

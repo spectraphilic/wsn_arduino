@@ -2,7 +2,7 @@
 
 
 Adafruit_SHT31 sht31;
-bool sht31_ok;
+bool sht31_ok = false;
 float sht_t, sht_h;
 
 void sht31_init()

@@ -2,7 +2,7 @@
 
 
 SFEVL53L1X vl;
-bool vl_ok;
+bool vl_ok = false;
 const unsigned int vl_distances_n = 10;
 uint16_t vl_distances[vl_distances_n];
 

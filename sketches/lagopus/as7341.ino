@@ -2,7 +2,7 @@
 
 
 Adafruit_AS7341 as7341;
-bool as7341_ok;
+bool as7341_ok = false;
 
 void as7341_init()
 {

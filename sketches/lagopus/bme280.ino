@@ -2,7 +2,7 @@
 
 
 Adafruit_BME280 bme;
-bool bme_ok;
+bool bme_ok = false;
 float bme_t, bme_p, bme_h;
 
 void bme280_init()

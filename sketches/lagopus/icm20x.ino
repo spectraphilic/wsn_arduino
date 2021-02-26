@@ -2,7 +2,7 @@
 
 
 Adafruit_ICM20948 icm;
-bool icm_ok;
+bool icm_ok = false;
 sensors_event_t icm_accel, icm_gyro, icm_mag, icm_temp;
 
 
