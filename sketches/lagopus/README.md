@@ -47,11 +47,11 @@ Waspmote pins (page 57):
 
 # TODO
 
-Ways we deviate from the SDI-12 standard:
+Ways we deviate (extend) from the SDI-12 standard:
 
-- We send more than 9 datapoints to M commands (AS7341 and ICM20X)
-- We send more than 35 chars to M-D commands (AS7341 and ICM20X)
+- We send more than 9 datapoints to M commands (AS7341, ICM20X, VL53L1)
 - We don't support some required features (see below)
+- We send more than 35 chars to M-D commands
 
 Required features (from 1.3 version) we don't support:
 
@@ -65,5 +65,4 @@ Things we may do:
 
 - Use concurrent commands, which allow for more data points (1-99) are longer D
   responses (75 chars)
-- Support D1-9 commands, send no more than 35/75 chars for a single D command.
 - Support service requests, for faster communication.

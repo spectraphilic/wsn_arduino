@@ -3,7 +3,7 @@
 
 SFEVL53L1X vl;
 bool vl_ok = false;
-const unsigned int vl_distances_n = 10;
+const unsigned int vl_distances_n = 15;
 uint16_t vl_distances[vl_distances_n];
 
 void vl53l1_init()
@@ -17,14 +17,14 @@ void vl53l1_init()
 }
 
 
-void vl53l1_measure()
+void vl53l1_measure(char *buffer)
 {
     if (! vl_ok) {
         sendResponse("0000");
         return;
     }
 
-    sendResponse("00210"); // 10 values in 2 seconds
+    sendResponse("00215"); // 15 values in 2 seconds
     vl.startRanging();
 
     // Wait for data ready
@@ -37,7 +37,8 @@ void vl53l1_measure()
 
     vl.clearInterrupt();
     vl.stopRanging();
-    sensor = VL53L1;
+
+    vl53l1_data(buffer);
 }
 
 void vl53l1_data(char *buffer)

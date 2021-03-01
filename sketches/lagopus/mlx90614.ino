@@ -16,17 +16,21 @@ void mlx_init()
     }
 }
 
-void mlx_measure()
+void mlx_measure(char *buffer)
 {
-    if (mlx_ok) {
-        sendResponse("0012"); // 2 values in 1 second
-        mlx_o = mlx.readObjectTempC();
-        mlx_a = mlx.readAmbientTempC();
-        bool ok = !isnan(mlx_o) && !isnan(mlx_a);
-        sensor = ok ? MLX90614 : ABORT;
-    } else {
+    if (! mlx_ok) {
         sendResponse("0000");
+        return;
     }
+
+    sendResponse("0012"); // 2 values in 1 second
+    mlx_o = mlx.readObjectTempC();
+    mlx_a = mlx.readAmbientTempC();
+    bool ok = !isnan(mlx_o) && !isnan(mlx_a);
+    if (ok)
+        mlx_data(buffer);
+    else
+        buffer[0] = '\0';
 }
 
 void mlx_data(char *buffer)

@@ -16,15 +16,19 @@ void icm_init()
     }
 }
 
-void icm_measure()
+void icm_measure(char *buffer)
 {
-    if (icm_ok) {
-        sendResponse("00110"); // 10 values in 1 second
-        bool ok = icm.getEvent(&icm_accel, &icm_gyro, &icm_temp, &icm_mag);
-        sensor = ok ? ICM20X : ABORT;
-    } else {
+    if (! icm_ok) {
         sendResponse("0000");
+        return;
     }
+
+    sendResponse("00110"); // 10 values in 1 second
+    bool ok = icm.getEvent(&icm_accel, &icm_gyro, &icm_temp, &icm_mag);
+    if (ok)
+        icm_data(buffer);
+    else
+        buffer[0] = '\0';
 }
 
 void icm_data(char *buffer)

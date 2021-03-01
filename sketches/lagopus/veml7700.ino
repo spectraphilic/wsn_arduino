@@ -16,18 +16,22 @@ void veml7700_init()
     }
 }
 
-void veml7700_measure()
+void veml7700_measure(char *buffer)
 {
-    if (veml_ok) {
-        sendResponse("0013"); // 3 values in 1 second
-        veml_lux = veml.readLux();
-        veml_white = veml.readWhite();
-        veml_als = veml.readALS();
-        bool ok = !isnan(veml_lux) && !isnan(veml_white);
-        sensor = ok ? VEML7700 : ABORT;
-    } else {
+    if (! veml_ok) {
         sendResponse("0000");
+        return;
     }
+
+    sendResponse("0013"); // 3 values in 1 second
+    veml_lux = veml.readLux();
+    veml_white = veml.readWhite();
+    veml_als = veml.readALS();
+    bool ok = !isnan(veml_lux) && !isnan(veml_white);
+    if (ok)
+        veml7700_data(buffer);
+    else
+        buffer[0] = '\0';
 }
 
 void veml7700_data(char *buffer)

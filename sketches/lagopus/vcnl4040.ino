@@ -16,18 +16,22 @@ void vcnl4040_init()
     }
 }
 
-void vcnl4040_measure()
+void vcnl4040_measure(char *buffer)
 {
-    if (vcnl_ok) {
-        sendResponse("0013"); // 3 values in 1 second
-        vcnl_prox = vcnl.getProximity();
-        vcnl_lux = vcnl.getLux();
-        vcnl_white = vcnl.getWhiteLight();
-        bool ok = true;
-        sensor = ok ? VCNL4040 : ABORT;
-    } else {
+    if (! vcnl_ok) {
         sendResponse("0000");
+        return;
     }
+
+    sendResponse("0013"); // 3 values in 1 second
+    vcnl_prox = vcnl.getProximity();
+    vcnl_lux = vcnl.getLux();
+    vcnl_white = vcnl.getWhiteLight();
+    bool ok = true;
+    if (ok)
+        vcnl4040_data(buffer);
+    else
+        buffer[0] = '\0';
 }
 
 void vcnl4040_data(char *buffer)

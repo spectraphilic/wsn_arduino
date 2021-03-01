@@ -14,15 +14,19 @@ void as7341_init()
     }
 }
 
-void as7341_measure()
+void as7341_measure(char *buffer)
 {
-    if (as7341_ok) {
-        sendResponse("00110"); // 10 values in 1 second
-        bool ok = as7341.readAllChannels();
-        sensor = ok ? AS7341 : ABORT;
-    } else {
+    if (! as7341_ok) {
         sendResponse("0000");
+        return;
     }
+
+    sendResponse("00110"); // 10 values in 1 second
+    bool ok = as7341.readAllChannels();
+    if (ok)
+        as7341_data(buffer);
+    else
+        buffer[0] = '\0';
 }
 
 void as7341_data(char *buffer)

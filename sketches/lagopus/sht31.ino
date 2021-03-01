@@ -19,17 +19,21 @@ void sht31_init()
     }
 }
 
-void sht31_measure()
+void sht31_measure(char *buffer)
 {
-    if (sht31_ok) {
-        sendResponse("0012"); // 2 values in 1 second
-        sht_t = sht31.readTemperature();
-        sht_h = sht31.readHumidity();
-        bool ok = !isnan(sht_t) && !isnan(sht_h);
-        sensor = ok ? SHT31 : ABORT;
-    } else {
+    if (! sht31_ok) {
         sendResponse("0000");
+        return;
     }
+
+    sendResponse("0012"); // 2 values in 1 second
+    sht_t = sht31.readTemperature();
+    sht_h = sht31.readHumidity();
+    bool ok = !isnan(sht_t) && !isnan(sht_h);
+    if (ok)
+        sht31_data(buffer);
+    else
+        buffer[0] = '\0';
 }
 
 void sht31_data(char *buffer)

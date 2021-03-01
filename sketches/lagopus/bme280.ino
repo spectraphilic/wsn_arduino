@@ -15,18 +15,22 @@ void bme280_init()
     }
 }
 
-void bme280_measure()
+void bme280_measure(char *buffer)
 {
-    if (bme_ok) {
-        sendResponse("0013"); // 3 values in 1 second
-        bme_t = bme.readTemperature();
-        bme_h = bme.readHumidity();
-        bme_p = bme.readPressure() / 100.0F;
-        bool ok = !isnan(bme_t) && !isnan(bme_h) && !isnan(bme_p);
-        sensor = ok ? BME280 : ABORT;
-    } else {
+    if (! bme_ok) {
         sendResponse("0000");
+        return;
     }
+
+    sendResponse("0013"); // 3 values in 1 second
+    bme_t = bme.readTemperature();
+    bme_h = bme.readHumidity();
+    bme_p = bme.readPressure() / 100.0F;
+    bool ok = !isnan(bme_t) && !isnan(bme_h) && !isnan(bme_p);
+    if (ok)
+        bme280_data(buffer);
+    else
+        buffer[0] = '\0';
 }
 
 void bme280_data(char *buffer)

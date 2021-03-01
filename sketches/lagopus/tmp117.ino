@@ -15,15 +15,19 @@ void tmp117_init()
     }
 }
 
-void tmp117_measure()
+void tmp117_measure(char *buffer)
 {
-    if (tmp117_ok) {
-        sendResponse("0011"); // 1 value in 1 second
-        bool ok = tmp117.getEvent(&tmp117_event);
-        sensor = ok ? TMP117 : ABORT;
-    } else {
+    if (! tmp117_ok) {
         sendResponse("0000");
+        return;
     }
+
+    sendResponse("0011"); // 1 value in 1 second
+    bool ok = tmp117.getEvent(&tmp117_event);
+    if (ok)
+        tmp117_data(buffer);
+    else
+        buffer[0] = '\0';
 }
 
 void tmp117_data(char *buffer)
