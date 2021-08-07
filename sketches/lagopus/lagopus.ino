@@ -10,10 +10,11 @@
  */
 
 //#define TEST
+//#define DEBUG
 #define DATA_PIN 5   /*!< The pin of the SDI-12 data bus */
 #define RESPONSE_SIZE 55
 
-#ifdef TEST
+#if defined(TEST) || defined(DEBUG)
     #define PRINT(...) Serial.print(__VA_ARGS__)
     #define PRINTLN(...) Serial.println(__VA_ARGS__)
 #else
@@ -60,7 +61,7 @@ enum states state;
 
 void setup()
 {
-#ifdef TEST
+#if defined(TEST) || defined(DEBUG)
     Serial.begin(9600); // The baudrate of Serial monitor is set in 9600
     while (!Serial); // Waiting for Serial Monitor
 #endif
