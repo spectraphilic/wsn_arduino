@@ -38,8 +38,7 @@ void vcnl4040_measure(char *buffer)
     for (int i=0; i < 4; i++) {
         vcnl.setAmbientIntegrationTime(integration_times[0]);
         vcnl_lux = vcnl.getLux();
-        //if (vcnl_lux < 65535) {
-        if (vcnl_lux < 50) {
+        if (vcnl_lux < 65535) {
             break;
         }
     }
