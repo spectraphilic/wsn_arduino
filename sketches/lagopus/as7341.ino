@@ -12,7 +12,6 @@ void as7341_init()
     } else {
         PRINTLN("0: AS7341    ERROR");
     }
-    as7341.setGain(AS7341_GAIN_8X);
 }
 
 void as7341_measure(char *buffer)
