@@ -26,7 +26,7 @@ void sdi12_send(const char *response)
 #else
 int sdi12_read() {
     static int i = 0;
-    char *messages = {
+    const char *messages = {
         "?!"
         "5!"
         "5I!"
