@@ -14,6 +14,8 @@ void veml7700_init()
     } else {
         PRINTLN("7: VEML7700  ERROR");
     }
+    veml.setGain(VEML7700_GAIN_1_8);
+    veml.setIntegrationTime(VEML7700_IT_25MS);
 }
 
 void veml7700_measure(char *buffer)
@@ -24,8 +26,8 @@ void veml7700_measure(char *buffer)
     }
 
     sendResponse("0013"); // 3 values in 1 second
-    veml_lux = veml.readLux();
-    veml_white = veml.readWhite();
+    veml_lux = veml.readLuxNormalized();
+    veml_white = veml.readWhiteNormalized();
     veml_als = veml.readALS();
     bool ok = !isnan(veml_lux) && !isnan(veml_white);
     if (ok)
