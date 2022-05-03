@@ -28,7 +28,7 @@ void vcnl4040_measure(char *buffer)
         sendResponse("0000");
         return;
     }
-    sendResponse("0063"); // 3 values in 6 seconds
+    sendResponse("0043"); // 3 values in 4 seconds
 
 #if defined(TEST) || defined(DEBUG)
     unsigned long t0 = millis();
