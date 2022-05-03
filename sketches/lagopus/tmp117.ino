@@ -21,13 +21,19 @@ void tmp117_measure(char *buffer)
         sendResponse("0000");
         return;
     }
-
     sendResponse("0011"); // 1 value in 1 second
+
+#if defined(TEST) || defined(DEBUG)
+    unsigned long t0 = millis();
+#endif
     bool ok = tmp117.getEvent(&tmp117_event);
     if (ok)
         tmp117_data(buffer);
     else
         buffer[0] = '\0';
+#if defined(TEST) || defined(DEBUG)
+    unsigned long t1 = millis(); Serial.print("time = "); Serial.print(t1-t0); Serial.println();
+#endif
 }
 
 void tmp117_data(char *buffer)

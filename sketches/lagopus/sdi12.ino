@@ -26,13 +26,13 @@ void sdi12_send(const char *response)
 #else
 int sdi12_read() {
     static int i = 0;
-    char *messages = {
+    const char *messages = {
         "?!"
         "5!"
         "5I!"
         "5M!"  "5D0!" "5D1!" // AS7341
         "5M1!" "5D0!"        // BME280
-        "5M2!" "5D0!" "5D1!" // ICM20X
+//      "5M2!" "5D0!" "5D1!" // ICM20X
         "5M3!" "5D0!"        // MLX90614
         "5M4!" "5D0!"        // SHT31
         "5M5!" "5D0!"        // TMP117

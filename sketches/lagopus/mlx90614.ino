@@ -22,8 +22,11 @@ void mlx_measure(char *buffer)
         sendResponse("0000");
         return;
     }
-
     sendResponse("0012"); // 2 values in 1 second
+
+#if defined(TEST) || defined(DEBUG)
+    unsigned long t0 = millis();
+#endif
     mlx_o = mlx.readObjectTempC();
     mlx_a = mlx.readAmbientTempC();
     bool ok = !isnan(mlx_o) && !isnan(mlx_a);
@@ -31,6 +34,9 @@ void mlx_measure(char *buffer)
         mlx_data(buffer);
     else
         buffer[0] = '\0';
+#if defined(TEST) || defined(DEBUG)
+    unsigned long t1 = millis(); Serial.print("time = "); Serial.print(t1-t0); Serial.println();
+#endif
 }
 
 void mlx_data(char *buffer)
