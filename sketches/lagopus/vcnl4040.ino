@@ -36,7 +36,7 @@ void vcnl4040_measure(char *buffer)
     // To avoid saturation try different integration times until a valid value
     // is read
     for (int i=0; i < 4; i++) {
-        vcnl.setAmbientIntegrationTime(integration_times[0]);
+        vcnl.setAmbientIntegrationTime(integration_times[i]);
         vcnl_lux = vcnl.getLux();
         if (vcnl_lux < 65535) {
             break;
