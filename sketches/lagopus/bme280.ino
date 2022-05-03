@@ -21,8 +21,11 @@ void bme280_measure(char *buffer)
         sendResponse("0000");
         return;
     }
-
     sendResponse("0013"); // 3 values in 1 second
+
+#if defined(TEST) || defined(DEBUG)
+    unsigned long t0 = millis();
+#endif
     bme_t = bme.readTemperature();
     bme_h = bme.readHumidity();
     bme_p = bme.readPressure() / 100.0F;
@@ -31,6 +34,9 @@ void bme280_measure(char *buffer)
         bme280_data(buffer);
     else
         buffer[0] = '\0';
+#if defined(TEST) || defined(DEBUG)
+    unsigned long t1 = millis(); Serial.print("time = "); Serial.print(t1-t0); Serial.println();
+#endif
 }
 
 void bme280_data(char *buffer)

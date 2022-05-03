@@ -28,15 +28,18 @@ void vcnl4040_measure(char *buffer)
         sendResponse("0000");
         return;
     }
-
     sendResponse("0063"); // 3 values in 6 seconds
 
+#if defined(TEST) || defined(DEBUG)
+    unsigned long t0 = millis();
+#endif
     // To avoid saturation try different integration times until a valid value
     // is read
     for (int i=0; i < 4; i++) {
         vcnl.setAmbientIntegrationTime(integration_times[0]);
         vcnl_lux = vcnl.getLux();
-        if (vcnl_lux < 65535) {
+        //if (vcnl_lux < 65535) {
+        if (vcnl_lux < 50) {
             break;
         }
     }
@@ -49,6 +52,9 @@ void vcnl4040_measure(char *buffer)
         vcnl4040_data(buffer);
     else
         buffer[0] = '\0';
+#if defined(TEST) || defined(DEBUG)
+    unsigned long t1 = millis(); Serial.print("time = "); Serial.print(t1-t0); Serial.println();
+#endif
 }
 
 void vcnl4040_data(char *buffer)

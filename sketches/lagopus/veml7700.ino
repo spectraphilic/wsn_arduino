@@ -24,8 +24,11 @@ void veml7700_measure(char *buffer)
         sendResponse("0000");
         return;
     }
-
     sendResponse("0013"); // 3 values in 1 second
+
+#if defined(TEST) || defined(DEBUG)
+    unsigned long t0 = millis();
+#endif
     veml_lux = veml.readLuxNormalized();
     veml_white = veml.readWhiteNormalized();
     veml_als = veml.readALS();
@@ -34,6 +37,9 @@ void veml7700_measure(char *buffer)
         veml7700_data(buffer);
     else
         buffer[0] = '\0';
+#if defined(TEST) || defined(DEBUG)
+    unsigned long t1 = millis(); Serial.print("time = "); Serial.print(t1-t0); Serial.println();
+#endif
 }
 
 void veml7700_data(char *buffer)

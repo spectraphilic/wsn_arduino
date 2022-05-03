@@ -20,13 +20,19 @@ void as7341_measure(char *buffer)
         sendResponse("0000");
         return;
     }
-
     sendResponse("00110"); // 10 values in 1 second
+
+#if defined(TEST) || defined(DEBUG)
+    unsigned long t0 = millis();
+#endif
     bool ok = as7341.readAllChannels();
     if (ok)
         as7341_data(buffer);
     else
         buffer[0] = '\0';
+#if defined(TEST) || defined(DEBUG)
+    unsigned long t1 = millis(); Serial.print("time = "); Serial.print(t1-t0); Serial.println();
+#endif
 }
 
 void as7341_data(char *buffer)
