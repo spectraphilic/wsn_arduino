@@ -14,6 +14,7 @@ void vcnl4040_init()
     } else {
         PRINTLN("6: VCNL4040  ERROR");
     }
+    vcnl.setAmbientIntegrationTime(VCNL4040_AMBIENT_INTEGRATION_TIME_80MS);
 }
 
 void vcnl4040_measure(char *buffer)
