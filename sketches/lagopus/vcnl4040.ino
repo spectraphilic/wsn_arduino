@@ -29,7 +29,7 @@ void vcnl4040_measure(char *buffer)
         return;
     }
 
-    sendResponse("0013"); // 3 values in 1 second
+    sendResponse("0063"); // 3 values in 6 seconds
 
     // To avoid saturation try different integration times until a valid value
     // is read
