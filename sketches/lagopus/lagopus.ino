@@ -19,7 +19,7 @@
 #endif
 #define RESPONSE_SIZE 55
 
-#ifdef TEST
+#if defined(TEST) || defined(DEBUG)
     #define PRINT(...) Serial.print(__VA_ARGS__)
     #define PRINTLN(...) Serial.println(__VA_ARGS__)
 #else

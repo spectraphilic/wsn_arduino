@@ -25,8 +25,11 @@ void sht31_measure(char *buffer)
         sendResponse("0000");
         return;
     }
-
     sendResponse("0012"); // 2 values in 1 second
+
+#if defined(TEST) || defined(DEBUG)
+    unsigned long t0 = millis();
+#endif
     sht_t = sht31.readTemperature();
     sht_h = sht31.readHumidity();
     bool ok = !isnan(sht_t) && !isnan(sht_h);
@@ -34,6 +37,9 @@ void sht31_measure(char *buffer)
         sht31_data(buffer);
     else
         buffer[0] = '\0';
+#if defined(TEST) || defined(DEBUG)
+    unsigned long t1 = millis(); Serial.print("time = "); Serial.print(t1-t0); Serial.println();
+#endif
 }
 
 void sht31_data(char *buffer)

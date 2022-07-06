@@ -23,8 +23,11 @@ void vl53l1_measure(char *buffer)
         sendResponse("0000");
         return;
     }
-
     sendResponse("00215"); // 15 values in 2 seconds
+
+#if defined(TEST) || defined(DEBUG)
+    unsigned long t0 = millis();
+#endif
     vl.startRanging();
 
     // Wait for data ready
@@ -39,6 +42,9 @@ void vl53l1_measure(char *buffer)
     vl.stopRanging();
 
     vl53l1_data(buffer);
+#if defined(TEST) || defined(DEBUG)
+    unsigned long t1 = millis(); Serial.print("time = "); Serial.print(t1-t0); Serial.println();
+#endif
 }
 
 void vl53l1_data(char *buffer)

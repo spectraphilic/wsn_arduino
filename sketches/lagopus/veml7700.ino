@@ -22,7 +22,6 @@ void veml7700_measure(char *buffer)
         sendResponse("0000");
         return;
     }
-
     sendResponse("0013"); // 3 values in 1 second
     veml_lux = veml.readLux(VEML_LUX_AUTO);
     veml_white = veml.readWhite();

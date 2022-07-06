@@ -5,6 +5,12 @@ Adafruit_VCNL4040 vcnl;
 bool vcnl_ok = false;
 uint16_t vcnl_prox, vcnl_lux, vcnl_white;
 
+const VCNL4040_AmbientIntegration integration_times[] = {
+    VCNL4040_AMBIENT_INTEGRATION_TIME_640MS,
+    VCNL4040_AMBIENT_INTEGRATION_TIME_320MS,
+    VCNL4040_AMBIENT_INTEGRATION_TIME_160MS,
+    VCNL4040_AMBIENT_INTEGRATION_TIME_80MS,
+};
 
 void vcnl4040_init()
 {
@@ -22,16 +28,32 @@ void vcnl4040_measure(char *buffer)
         sendResponse("0000");
         return;
     }
+    sendResponse("0043"); // 3 values in 4 seconds
 
-    sendResponse("0013"); // 3 values in 1 second
+#if defined(TEST) || defined(DEBUG)
+    unsigned long t0 = millis();
+#endif
+    // To avoid saturation try different integration times until a valid value
+    // is read
+    for (int i=0; i < 4; i++) {
+        vcnl.setAmbientIntegrationTime(integration_times[i]);
+        vcnl_lux = vcnl.getLux();
+        if (vcnl_lux < 65535) {
+            break;
+        }
+    }
+
     vcnl_prox = vcnl.getProximity();
-    vcnl_lux = vcnl.getLux();
     vcnl_white = vcnl.getWhiteLight();
+
     bool ok = true;
     if (ok)
         vcnl4040_data(buffer);
     else
         buffer[0] = '\0';
+#if defined(TEST) || defined(DEBUG)
+    unsigned long t1 = millis(); Serial.print("time = "); Serial.print(t1-t0); Serial.println();
+#endif
 }
 
 void vcnl4040_data(char *buffer)
