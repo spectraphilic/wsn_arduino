@@ -10,7 +10,13 @@
  */
 
 //#define TEST
-#define DATA_PIN 5   /*!< The pin of the SDI-12 data bus */
+#define NYALESUND
+
+#ifdef NYALESUND
+    #define DATA_PIN 6   /*!< The pin of the SDI-12 data bus, Use 6 for Ny Alesund */
+#else
+    #define DATA_PIN 5   /*!< The pin of the SDI-12 data bus, Use 6 for Ny Alesund */
+#endif
 #define RESPONSE_SIZE 55
 
 #ifdef TEST
