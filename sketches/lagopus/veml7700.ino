@@ -24,7 +24,7 @@ void veml7700_measure(char *buffer)
     }
 
     sendResponse("0013"); // 3 values in 1 second
-    veml_lux = veml.readLux();
+    veml_lux = veml.readLux(VEML_LUX_AUTO);
     veml_white = veml.readWhite();
     veml_als = veml.readALS();
     bool ok = !isnan(veml_lux) && !isnan(veml_white);
